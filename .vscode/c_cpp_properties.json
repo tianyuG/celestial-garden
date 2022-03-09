@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Arduino",
+            "includePath": [
+                "/usr/share/arduino/hardware/archlinux-arduino/avr/cores/arduino/**",
+                "/usr/share/arduino/hardware/archlinux-arduino/avr/libraries/**",
+                "/usr/share/arduino/**",
+                "/usr/avr/**",
+                "/home/tianyu/Arduino/**",
+                "/home/tianyu/.arduino15/**"
+            ],
+            "defines": [
+                "USBCON"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        }
+    ],
+    "version": 4
+}
