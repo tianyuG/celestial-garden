@@ -3,20 +3,25 @@
         {
             "name": "Arduino",
             "includePath": [
-                "/usr/share/arduino/hardware/archlinux-arduino/avr/cores/arduino/**",
-                "/usr/share/arduino/hardware/archlinux-arduino/avr/libraries/**",
-                "/usr/share/arduino/**",
-                "/usr/avr/**",
-                "/home/tianyu/Arduino/**",
-                "/home/tianyu/.arduino15/**"
+                "${workspaceFolder}/**",
+                "C:/Program Files (x86)/Arduino/**",
+                "C:/Users/Tianyu/Documents/Arduino/libraries/**",
+                "C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino",
+                "C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include",
+                "C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/7.3.0/include",
+                "C:/Program Files (x86)/Arduino/hardware/arduino/avr/variants/ethernet",
+                "C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries",
+                "C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/SoftwareSerial",
+                "C:/Users/Tianyu/Documents/Arduino/libraries/ArduinoUniqueID/src"
             ],
             "defines": [
-                "USBCON"
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
             ],
-            "browse": {
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            }
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64"
         }
     ],
     "version": 4
