@@ -11,7 +11,7 @@ FASTLED_USING_NAMESPACE
 
 #define NUM_OF_BOARDS 3
 #define UDP_OUT_PORT (uint16_t)8672
-#define BUMP_THRESHOLD 13
+#define BUMP_THRESHOLD 26
 #define LED_0_DATA  5
 #define LED_0_CLK   3
 #define LED_1_DATA  8
@@ -55,7 +55,9 @@ uint8_t currentAverage = 0;
 uint8_t currentX = 0;
 uint8_t currentY = 0;
 
-CRGB leds[NUM_LEDS];
+CRGBArray<NUM_LEDS> ledStrip0;
+CRGBPalette16 currentPalette;
+TBlendType    currentBlending;
 
 // defines the serial numbers of the board
 const uint8_t uniqId[NUM_OF_BOARDS][8] = {
@@ -97,10 +99,13 @@ void setup() {
   pinMode(LED_3_DATA,OUTPUT);
   pinMode(LED_3_CLK,OUTPUT);
 
-  FastLED.addLeds<LED_TYPE,LED_0_DATA,LED_0_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_1_DATA,LED_1_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_2_DATA,LED_2_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_3_DATA,LED_3_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_0_DATA,LED_0_CLK,COLOR_ORDER>(ledStrip0, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_1_DATA,LED_1_CLK,COLOR_ORDER>(ledStrip0, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_2_DATA,LED_2_CLK,COLOR_ORDER>(ledStrip0, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_3_DATA,LED_3_CLK,COLOR_ORDER>(ledStrip0, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.setBrightness(BRIGHTNESS);
+  currentPalette = RainbowColors_p;
+  currentBlending = LINEARBLEND;
 
   Serial.begin(115200);
   // Delay for 0.01s until serial is fully initialised
@@ -126,7 +131,7 @@ void setup() {
   // If boardIndex remains the same, it means that the board is not one of the known boards.
   if (boardIndex == 127) {
     DIAG_PRINTLN("ERROR - Unknown board.");
-    blinkLED();
+    blinkWarningLED();
   }
 
   if (!mpu.begin()) {
@@ -176,9 +181,8 @@ void loop() {
 //  DIAG_PRINTLN(rawAcclY);
 
   runningAverageBufferX[nextRunningAverage++] = rawAcclX;
-  runningAverageBufferY[nextRunningAverage++] = rawAcclY;
-  if (nextRunningAverage >= runningAverageCount)
-  {
+  runningAverageBufferY[nextRunningAverage] = rawAcclY;
+  if (runningAverageCount <= nextRunningAverage) {
     nextRunningAverage = 0;
   }
   int runningAverageAcclX = 0;
@@ -190,7 +194,7 @@ void loop() {
   }
   runningAverageAcclX /= runningAverageCount;
   runningAverageAcclY /= runningAverageCount;
-  DIAG_PRINT("runningAverageAcclX: ");
+  DIAG_PRINT(" runningAverageAcclX: ");
   DIAG_PRINT(runningAverageAcclX);
   DIAG_PRINT(" runningAverageAcclY: ");
   DIAG_PRINTLN(runningAverageAcclY);
@@ -199,12 +203,42 @@ void loop() {
   uint8_t scaledY = map(runningAverageAcclY, -1100, 1100, 0, 255);
   uint8_t diffX = abs(scaledX - 127);
   uint8_t diffY = abs(scaledY - 127);
+  uint8_t rgbX = map(diffX, 0, 20, 40, 255);
+  uint8_t rgbY = map(diffY, 0, 20, 40, 255);
 
+  currentAverage = (rgbX + rgbY) / 2;
+  currentX = rgbX;
+  currentY = rgbY;
+  DIAG_PRINT(" currentAverage: ");
+  DIAG_PRINTLN(currentAverage);
+  DIAG_PRINT(" currentX: ");
+  DIAG_PRINTLN(currentX);
+  DIAG_PRINT(" currentY: ");
+  DIAG_PRINTLN(currentY);
+
+//  if (currentAverage - previousAverage > BUMP_THRESHOLD) {
+//    // currentVal doesn't really matter for bumps
+////    sendOSCStream((char*)osc_bump, 0);
+//    colorWipeUp(1);
+//    // HSV for RGB(40, 0, 40) (scaled to 0-255)
+//    colorWipeDown(213, 255, 40, 1);
+//  } else {
+    for (int i = 0; i < NUM_LEDS; i++) {
+      ledStrip0[i] = CRGB(rgbX, 0, rgbY);
+      
+//      sendOSCStream((char*)osc_xy, currentAverage);
+//      sendOSCStream((char*)osc_x, currentX);
+//      sendOSCStream((char*)osc_y, currentY);
+    }
+    FastLED.delay(30);
+//  }
+  previousAverage = currentAverage;
+//  delay(1);
 }
 
 /*
  * Function to format and send data over OSC.
- * axis: Use osc_x, osc_y, osc_xy or oxy_bump (need to cast from `const char*` to `char*`).
+ * axis: Use osc_x, osc_y, osc_xy or osc_bump (need to cast from `const char*` to `char*`).
  * currentVal: Value to be passed in OSC message.
  * EXAMPLE: sendOSCStream((char*) osc_bump, 10);
  */
@@ -214,9 +248,14 @@ void sendOSCStream(char* axis, uint8_t currentVal) {
   if (strncmp(osc_bump, axis, 4) == 0) {
     sprintf(boardIdent, "/bouy0%d/xy", boardIndex + 1);
     msg.add(boardIdent).add("bang");
+    DIAG_PRINT(boardIdent);
+    DIAG_PRINT(" bang");
   } else {
     sprintf(boardIdent, "/bouy0%d/%s", boardIndex + 1, axis);
     msg.add(boardIdent).add(currentVal);
+    DIAG_PRINT(boardIdent);
+    DIAG_PRINT(" ");
+    DIAG_PRINTLN(currentVal);
   }
   Udp.beginPacket(ipAddr[boardIndex], UDP_OUT_PORT);
   msg.send(Udp);
@@ -225,11 +264,32 @@ void sendOSCStream(char* axis, uint8_t currentVal) {
 }
 
 // Blink the LED identified as L and halt to show the board is not functioning as designed.
-void blinkLED() {
+void blinkWarningLED() {
   while(true) {
     digitalWrite(LED_BUILTIN, HIGH);
     delay(500);
     digitalWrite(LED_BUILTIN, LOW);
     delay(500);
   }
+}
+
+void colorWipeUp(int wait) {
+//  ledStrip0.fadeLightBy(10);
+  uint8_t hue = random(0, 255);
+  uint8_t sat = random(0, 255);
+  uint8_t val = random(0, 255);
+  for (int i = NUM_LEDS - 1; i >= 0; i--) {
+    ledStrip0[i] = CHSV(hue, sat, val);
+    FastLED.delay(wait);
+  }
+  DIAG_PRINTLN("Wipe UP");
+}
+
+void colorWipeDown(uint8_t hue, uint8_t sat, uint8_t val, int wait) {
+//  ledStrip0.fadeToBlackBy(40);
+  for (int i = 0; i < NUM_LEDS; i++) {
+    ledStrip0[i] = CHSV(hue, sat, val);
+    FastLED.delay(wait);
+  }
+  DIAG_PRINTLN("Wipe DOWN");
 }
