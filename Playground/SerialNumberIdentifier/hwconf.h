@@ -1,7 +1,7 @@
 #ifndef _HWCONF_H
 #define _HWCONF_H
 static const uint8_t numBoards = 18;
-static const uint8_t uniqId[NUM_OF_BOARDS][3] = {
+static const uint8_t uniqId[numBoards][3] = {
     {0x17, 0x28, 0x3B},
     {0x18, 0x0E, 0x34},
     {0x17, 0x28, 0x07},
@@ -21,7 +21,7 @@ static const uint8_t uniqId[NUM_OF_BOARDS][3] = {
     {0x15, 0x12, 0x38},
     {0x17, 0x29, 0x12}
 };
-static uint8_t macAddr[NUM_OF_BOARDS][6] = {
+static uint8_t macAddr[numBoards][6] = {
     {0x2C, 0xF7, 0xF1, 0x08, 0x38, 0x1C},
     {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0x73},
     {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0x6E},
@@ -41,7 +41,7 @@ static uint8_t macAddr[NUM_OF_BOARDS][6] = {
     {0x2C, 0xF7, 0xF1, 0x08, 0x38, 0x1E},
     {0x2C, 0xF7, 0xF1, 0x08, 0x38, 0x53}
 };
-static IPAddress ipAddr[NUM_OF_BOARDS] = {
+static IPAddress ipAddr[numBoards] = {
     IPAddress(192, 168, 1, 101), 
     IPAddress(192, 168, 1, 102), 
     IPAddress(192, 168, 1, 103), 
