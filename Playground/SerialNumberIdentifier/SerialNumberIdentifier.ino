@@ -41,6 +41,10 @@ FASTLED_USING_NAMESPACE
 #define WIPE_UP_DELAY 1
 #define WIPE_DOWN_DELAY 1
 #define BLEND_DURATION 1500
+// How long should the code wait before assuming serial module is initialised (milliseconds)
+#define SERIAL_INIT_DELAY 5000
+// How often should it send OSC message if not bumped (milliseconds)
+#define SEND_OSC_EVERY_SO_OFTEN 100
 
 // Comment out the next line if diagnostic output (over serial) is not needed
 // This can save around 1% -- 2% of program storage
@@ -100,29 +104,6 @@ uint8_t hue1 = 127;
 uint8_t sat1 = 255;
 uint8_t val1 = 127;
 
-// // defines the serial numbers of the board
-// const uint8_t uniqId[NUM_OF_BOARDS][8] = {
-//   {52, 46, 49, 32, 255, 24, 14, 51},
-//   {52, 46, 49, 32, 255, 24, 14, 52}, 
-//   {0x34, 0x2E, 0x31, 0x20, 0xFF, 0x17, 0x28, 0x3B}
-//   };
-
-// const uint8_t macAddr[NUM_OF_BOARDS][6] = {
-//   {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0x7C},
-//   {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0xD0},
-//   {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0xD1}
-//   };
-  
-// // defines the IP address corresponding to the serial number of the board
-// const IPAddress ipAddr[NUM_OF_BOARDS] = {
-//   IPAddress(192, 168, 1, 41), 
-//   IPAddress(192, 168, 1, 42),
-//   IPAddress(192, 168, 1, 43)
-//   };
-
-// Not used; sum up the UniqueID and it may save some storage but we don't need that right now.
-// uint32_t uniqIdSum;
-
 // The identification number of the board
 uint8_t boardIndex = 127;
 
@@ -149,8 +130,11 @@ void setup() {
   currentBlending = LINEARBLEND;
 
   Serial.begin(115200);
-  // Delay for 0.01s until serial is fully initialised
-  while (!Serial) delay(10);
+  // Instead of the following code:
+  // while (!Serial) delay(10);
+  // Use a hardcoded time to wait until Serial is up.
+  // Otherwise, the code can hang
+  delay(SERIAL_INIT_DELAY);
 //  Serial.flush();
   DIAG_PRINTLN("Serial connection established.");
 
@@ -317,9 +301,9 @@ void loop() {
     DIAG_PRINT(" brightness ");
     DIAG_PRINTLN(brightness);
     FastLED.show();
-    sendOSCStream(xy, currentAverage);
-    sendOSCStream(x, currentX);
-    sendOSCStream(y, currentY);
+//    sendOSCStream(xy, currentAverage);
+//    sendOSCStream(x, currentX);
+//    sendOSCStream(y, currentY);
   }
   DIAG_PRINT(" currentIndex: ");
   DIAG_PRINTLN(currentIndex);
@@ -366,52 +350,15 @@ void loop() {
     FastLED.show();
   }
     
-  
-
-//   for(int i = 0; i < NUM_LEDS/2; i++) {   
-//     // fade everything out
-// //    leds.fadeToBlackBy(40);
-
-//     // let's set an led value
-//     leds[i] = CHSV(hue++,255,255);
-
-
-//     // now, let's first 20 leds to the top 20 leds, 
-//     leds(NUM_LEDS/2,NUM_LEDS-1) = leds(NUM_LEDS/2 - 1 ,0);
-    
-    
-    
-//     FastLED.delay(33);
-//   }
-  // }
-  
-
-//  if (currentIndex >= NUM_LEDS) {
-//    currentIndex = 0;
-//    isInAnimation = false;
-//  }
-//  if (currentAverage - previousAverage > BUMP_THRESHOLD) {
-//    // bumped when 
-//    if (!isInAnimation) {
-//      
-//    } else {
-//      
-//    }
-//    
-//    // currentVal doesn't really matter for bumps
-////    sendOSCStream(bump, 0);
-////    colorWipeUp(WIPE_UP_DELAY);
-////    colorWipeDown(40, 0, 40, WIPE_DOWN_DELAY);
-//  } else {
-//    for (int i = 0; i < NUM_LEDS; i++) {
-//      leds[i] = CRGB(rgbX, 0, rgbY);
-//    }
-//    sendOSCStream(xy, currentAverage);
-//    sendOSCStream(x, currentX);
-//    sendOSCStream(y, currentY);
-//    FastLED.show();
-//  }
   previousAverage = currentAverage;
+
+  EVERY_N_MILLISECONDS (SEND_OSC_EVERY_SO_OFTEN) {
+    if(!isInAnimation) {
+      sendOSCStream(xy, currentAverage);
+      sendOSCStream(x, currentX);
+      sendOSCStream(y, currentY);
+    }
+  }
 ////  delay(1);
 }
 
@@ -460,27 +407,4 @@ void blinkWarningLED() {
     digitalWrite(LED_BUILTIN, LOW);
     delay(500);
   }
-}
-
-void colorWipeUp(int wait) {
-//  leds.fadeLightBy(10);
-  uint8_t red = random(0, 255);
-  uint8_t green = random(0, 255);
-  uint8_t blue = random(0, 255);
-  for (int i = NUM_LEDS - 1; i >= 0; i--) {
-    leds[i] = CRGB(red, green, blue);
-    FastLED.show();
-    delay(wait);
-  }
-  DIAG_PRINTLN("Wipe UP");
-}
-
-void colorWipeDown(uint8_t red, uint8_t green, uint8_t blue, int wait) {
-//  leds.fadeToBlackBy(40);
-  for (int i = 0; i < NUM_LEDS; i++) {
-    leds[i] = CRGB(red, green, blue);
-    FastLED.show();
-    delay(wait);
-  }
-  DIAG_PRINTLN("Wipe DOWN");
 }
