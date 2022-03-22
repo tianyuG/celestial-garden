@@ -231,15 +231,15 @@ void loop()
   //  DIAG_PRINT(" rawAcclY: ");
   //  DIAG_PRINTLN(rawAcclY);
 
-  runningAverageBufferX[nextRunningAverage++] = rawAcclX;
+  runningAverageBufferX[nextRunningAverage] = rawAcclX;
   runningAverageBufferY[nextRunningAverage] = rawAcclY;
-  if (runningAverageCount <= nextRunningAverage) nextRunningAverage = 0;
+  if (runningAverageCount < ++nextRunningAverage) nextRunningAverage = 0;
   // TODO: might change this to make the code run faster (add to buffer once every loop as opposed to adding to buffer 10 times every loop)
-  // for (int i = 0; i < runningAverageCount; ++i)
-  // {
+  for (int i = 0; i < runningAverageCount; ++i)
+  {
     runningAverageAcclX += runningAverageBufferX[i];
     runningAverageAcclY += runningAverageBufferY[i];
-  // }
+  }
   runningAverageAcclX /= runningAverageCount;
   runningAverageAcclY /= runningAverageCount;
   DIAG_PRINT(" runningAverageAcclX: ");
@@ -274,6 +274,8 @@ void loop()
   brightness = beatsin8(20, 240, 255);
   hue = map(brightness, 100, 255, hue0, hue1);
   sat = map(brightness, 100, 255, sat0, sat1);
+  // Will never trigger bump for five seconds after initial bootup
+  // To build up the average
   if (!isInAnimation && timeElapsed > 50)
   {
     for (int i = 0; i < NUM_LEDS / 2; i++)
