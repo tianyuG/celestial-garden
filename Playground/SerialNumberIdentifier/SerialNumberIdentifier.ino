@@ -6,10 +6,11 @@
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <FastLED.h>
+#include "hwconf.h"
 
 FASTLED_USING_NAMESPACE
 
-#define NUM_OF_BOARDS 3
+//#define NUM_OF_BOARDS 18
 #define UDP_OUT_PORT (uint16_t)8672
 #define BUMP_THRESHOLD 40
 #define LED_0_DATA  5
@@ -40,6 +41,10 @@ FASTLED_USING_NAMESPACE
 #define WIPE_UP_DELAY 1
 #define WIPE_DOWN_DELAY 1
 #define BLEND_DURATION 1500
+// How long should the code wait before assuming serial module is initialised (milliseconds)
+#define SERIAL_INIT_DELAY 5000
+// How often should it send OSC message if not bumped (milliseconds)
+#define SEND_OSC_EVERY_SO_OFTEN 100
 
 // Comment out the next line if diagnostic output (over serial) is not needed
 // This can save around 1% -- 2% of program storage
@@ -82,33 +87,22 @@ uint8_t brightness = INIT_BRIGHTNESS;
 // Fade up or down (1 or -1);
 uint8_t fade_direction = 1;
 
-CRGBArray<NUM_LEDS> ledStrip0;
+CRGBArray<NUM_LEDS> leds;
 //CRGBPalette16 currentPalette;
+// Two halves of the led strip
+CRGBSet leds0(leds(0, NUM_LEDS / 2 - 1));
+CRGBSet leds1(leds(NUM_LEDS / 2, NUM_LEDS - 1));
 TBlendType    currentBlending;
-CHSV startCRGB, endCRGB;
-
-// defines the serial numbers of the board
-const uint8_t uniqId[NUM_OF_BOARDS][8] = {
-  {52, 46, 49, 32, 255, 24, 14, 51},
-  {52, 46, 49, 32, 255, 24, 14, 52}, 
-  {0x34, 0x2E, 0x31, 0x20, 0xFF, 0x17, 0x28, 0x3B}
-  };
-
-const uint8_t macAddr[NUM_OF_BOARDS][6] = {
-  {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0x7C},
-  {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0xD0},
-  {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0xD1}
-  };
-  
-// defines the IP address corresponding to the serial number of the board
-const IPAddress ipAddr[NUM_OF_BOARDS] = {
-  IPAddress(192, 168, 1, 41), 
-  IPAddress(192, 168, 1, 42),
-  IPAddress(192, 168, 1, 43)
-  };
-
-// Not used; sum up the UniqueID and it may save some storage but we don't need that right now.
-// uint32_t uniqIdSum;
+// CHSV startCRGB, endCRGB;
+uint8_t hue = 0;
+uint8_t sat = 0;
+uint8_t val = 191;
+uint8_t hue0 = 0;
+uint8_t sat0 = 0;
+uint8_t val0 = 191;
+uint8_t hue1 = 127;
+uint8_t sat1 = 255;
+uint8_t val1 = 127;
 
 // The identification number of the board
 uint8_t boardIndex = 127;
@@ -127,17 +121,20 @@ void setup() {
   pinMode(LED_3_DATA,OUTPUT);
   pinMode(LED_3_CLK,OUTPUT);
 
-  FastLED.addLeds<LED_TYPE,LED_0_DATA,LED_0_CLK,COLOR_ORDER>(ledStrip0, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_1_DATA,LED_1_CLK,COLOR_ORDER>(ledStrip0, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_2_DATA,LED_2_CLK,COLOR_ORDER>(ledStrip0, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_3_DATA,LED_3_CLK,COLOR_ORDER>(ledStrip0, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_0_DATA,LED_0_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_1_DATA,LED_1_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_2_DATA,LED_2_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_3_DATA,LED_3_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 //  FastLED.setBrightness(BRIGHTNESS);
 //  currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
 
   Serial.begin(115200);
-  // Delay for 0.01s until serial is fully initialised
-  while (!Serial) delay(10);
+  // Instead of the following code:
+  // while (!Serial) delay(10);
+  // Use a hardcoded time to wait until Serial is up.
+  // Otherwise, the code can hang
+  delay(SERIAL_INIT_DELAY);
 //  Serial.flush();
   DIAG_PRINTLN("Serial connection established.");
 
@@ -145,15 +142,15 @@ void setup() {
   UniqueID8dump(Serial);
   // Compare the serial number of the board against known serials. 
   // This will be used to set up boardIndex (for OSC) as well as the IP and MAC addresses.
-  for (int i = 0; i < NUM_OF_BOARDS; i++) {
+  for (int i = 0; i < numBoards; i++) {
     bool matched = true;
-    for (size_t j = 0; j < 8; j++) {
-      if (UniqueID8[j] != uniqId[i][j]) matched = false;
+    for (size_t j = 0; j < 3; j++) {
+      if (UniqueID8[j + 5] != uniqId[i][j]) matched = false;
     }
     if (matched) {
-      DIAG_PRINT("Board matched at index ");
-      DIAG_PRINTLN(i);
       boardIndex = i;
+      DIAG_PRINT("Board matched at index ");
+      DIAG_PRINTLN(boardIndex);
     }
   }
   // If boardIndex remains the same, it means that the board is not one of the known boards.
@@ -185,7 +182,7 @@ void setup() {
   Udp.begin(UDP_OUT_PORT);
 
   for (int i = 0; i < NUM_LEDS; i++) {
-    ledStrip0[i] = CRGB(100, 100, 100);
+    leds[i] = CRGB(100, 100, 100);
   }
   DIAG_PRINTLN("Lightstrip will now light up for five seconds.");
   FastLED.show();
@@ -255,13 +252,13 @@ void loop() {
   DIAG_PRINT(" previousAverage: ");
   DIAG_PRINTLN(previousAverage);
   DIAG_PRINT(" currentX: ");
-  DIAG_PRINTLN(currentX);
+  DIAG_PRINT(currentX);
   DIAG_PRINT(" currentY: ");
   DIAG_PRINTLN(currentY);
 
 //  for (int i = 0; i < NUM_LEDS; i++) {
-//    ledStrip0[i].setRGB(100, 100, 100);
-//    ledStrip0[i].fadeLightBy(brightness);
+//    leds[i].setRGB(100, 100, 100);
+//    leds[i].fadeLightBy(brightness);
 //  }
 //  FastLED.show();
 //
@@ -280,53 +277,88 @@ void loop() {
 //
 //  delay(FADE_DURATION);
 
-  static uint8_t hue;
-  EVERY_N_MILLISECONDS (20) {
-    FastLED.setBrightness( beatsin8(60,128,255));
-  for(int i = 0; i < NUM_LEDS/2; i++) {   
-    // fade everything out
-//    ledStrip0.fadeToBlackBy(40);
-
-    // let's set an led value
-    ledStrip0[i] = CHSV(hue++,255,255);
-
-
-    // now, let's first 20 leds to the top 20 leds, 
-    ledStrip0(NUM_LEDS/2,NUM_LEDS-1) = ledStrip0(NUM_LEDS/2 - 1 ,0);
-    
-    
-    
-    FastLED.delay(33);
-  }
-  }
+//  static uint8_t hue;
+  brightness = beatsin8(20,240,255);
+  hue = map(brightness, 100, 255, hue0, hue1);
+  sat = map(brightness, 100, 255, sat0, sat1);
+  // EVERY_N_MILLISECONDS (20) {
+  if (!isInAnimation) {
+    for (int i = 0; i < NUM_LEDS / 2; i++) {
+      leds0[i] = CHSV(hue, sat, brightness);
+      leds1[NUM_LEDS / 2 - 1 - i] = CHSV(hue, sat, brightness);
   
-
-//  if (currentIndex >= NUM_LEDS) {
-//    currentIndex = 0;
-//    isInAnimation = false;
-//  }
-//  if (currentAverage - previousAverage > BUMP_THRESHOLD) {
-//    // bumped when 
-//    if (!isInAnimation) {
-//      
-//    } else {
-//      
-//    }
-//    
-//    // currentVal doesn't really matter for bumps
-////    sendOSCStream(bump, 0);
-////    colorWipeUp(WIPE_UP_DELAY);
-////    colorWipeDown(40, 0, 40, WIPE_DOWN_DELAY);
-//  } else {
-//    for (int i = 0; i < NUM_LEDS; i++) {
-//      ledStrip0[i] = CRGB(rgbX, 0, rgbY);
-//    }
+      leds0[i].r = dim8_video(leds0[i].r);
+      leds0[i].g = dim8_video(leds0[i].g);
+      leds0[i].b = dim8_video(leds0[i].b);
+      leds1[NUM_LEDS / 2 - 1 - i].r = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].r);
+      leds1[NUM_LEDS / 2 - 1 - i].g = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].g);
+      leds1[NUM_LEDS / 2 - 1 - i].b = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].b);
+    }
+    DIAG_PRINT("= hue ");
+    DIAG_PRINT(hue);
+    DIAG_PRINT(" sat ");
+    DIAG_PRINT(sat);
+    DIAG_PRINT(" brightness ");
+    DIAG_PRINTLN(brightness);
+    FastLED.show();
 //    sendOSCStream(xy, currentAverage);
 //    sendOSCStream(x, currentX);
 //    sendOSCStream(y, currentY);
-//    FastLED.show();
-//  }
-//  previousAverage = currentAverage;
+  }
+  DIAG_PRINT(" currentIndex: ");
+  DIAG_PRINTLN(currentIndex);
+  DIAG_PRINT("! hue ");
+  DIAG_PRINT(hue);
+  DIAG_PRINT(" sat ");
+  DIAG_PRINT(sat);
+  DIAG_PRINT(" brightness ");
+  DIAG_PRINTLN(brightness);
+  if (currentIndex++ > NUM_LEDS) {
+    isInAnimation = false;
+    currentIndex = 0;
+    sendOSCStream(xy, currentAverage);
+    sendOSCStream(x, currentX);
+    sendOSCStream(y, currentY);
+  } else {
+    if (abs(currentAverage - previousAverage) > BUMP_THRESHOLD) {
+      if (isInAnimation) currentIndex = 0;
+      isInAnimation = true;
+      sendOSCStream(bump, 0);
+    }
+  }
+  if (isInAnimation) {
+    if (currentIndex < NUM_LEDS / 2) {
+      leds0[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
+      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1] = CRGB(rgbX, 0, rgbY);
+      leds0[currentIndex - 1].r = dim8_video(leds0[currentIndex - 1].r);
+      leds0[currentIndex - 1].g = dim8_video(leds0[currentIndex - 1].g);
+      leds0[currentIndex - 1].b = dim8_video(leds0[currentIndex - 1].b);
+      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].r = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].r);
+      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].g = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].g);
+      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].b = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].b);
+    } else {
+      leds0[currentIndex - NUM_LEDS / 2] = CHSV(hue, sat, brightness);
+      leds1[NUM_LEDS - 1 - currentIndex] = CHSV(hue, sat, brightness);
+      leds0[currentIndex - NUM_LEDS / 2].r = dim8_video(leds0[currentIndex - NUM_LEDS / 2].r);
+      leds0[currentIndex - NUM_LEDS / 2].g = dim8_video(leds0[currentIndex - NUM_LEDS / 2].g);
+      leds0[currentIndex - NUM_LEDS / 2].b = dim8_video(leds0[currentIndex - NUM_LEDS / 2].b);
+      leds1[NUM_LEDS - 1 - currentIndex].r = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].r);
+      leds1[NUM_LEDS - 1 - currentIndex].g = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].g);
+      leds1[NUM_LEDS - 1 - currentIndex].b = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].b);
+    }
+    
+    FastLED.show();
+  }
+    
+  previousAverage = currentAverage;
+
+  EVERY_N_MILLISECONDS (SEND_OSC_EVERY_SO_OFTEN) {
+    if(!isInAnimation) {
+      sendOSCStream(xy, currentAverage);
+      sendOSCStream(x, currentX);
+      sendOSCStream(y, currentY);
+    }
+  }
 ////  delay(1);
 }
 
@@ -343,7 +375,7 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
     sprintf(boardIdent, "/bouy0%d/xy", boardIndex + 1);
     msg.add(boardIdent).add("bang");
     DIAG_PRINT(boardIdent);
-    DIAG_PRINT(" bang");
+    DIAG_PRINTLN(" bang");
   } else {
     switch(cmd) {
       case(x):
@@ -375,27 +407,4 @@ void blinkWarningLED() {
     digitalWrite(LED_BUILTIN, LOW);
     delay(500);
   }
-}
-
-void colorWipeUp(int wait) {
-//  ledStrip0.fadeLightBy(10);
-  uint8_t red = random(0, 255);
-  uint8_t green = random(0, 255);
-  uint8_t blue = random(0, 255);
-  for (int i = NUM_LEDS - 1; i >= 0; i--) {
-    ledStrip0[i] = CRGB(red, green, blue);
-    FastLED.show();
-    delay(wait);
-  }
-  DIAG_PRINTLN("Wipe UP");
-}
-
-void colorWipeDown(uint8_t red, uint8_t green, uint8_t blue, int wait) {
-//  ledStrip0.fadeToBlackBy(40);
-  for (int i = 0; i < NUM_LEDS; i++) {
-    ledStrip0[i] = CRGB(red, green, blue);
-    FastLED.show();
-    delay(wait);
-  }
-  DIAG_PRINTLN("Wipe DOWN");
 }
