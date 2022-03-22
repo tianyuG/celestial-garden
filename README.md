@@ -27,6 +27,9 @@ The Arduino package requires the following external libraries.
 
 This project has been tested with Arduino IDE on Windows 10. 
 
+## Usage
+Ensure the data within `hwconf.h` matches the hardware that will be used, then upload `main.ino` to the Arduino hardware using Arduino IDE.
+
 ## Bootup Sequences
 If the correct Arduino patch is uploaded to the board, the LED strip is receiving correct amount of power, and the Arduino is being powered, it will attempt to do the following:
 
