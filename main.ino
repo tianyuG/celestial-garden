@@ -10,9 +10,7 @@
 
 FASTLED_USING_NAMESPACE
 
-//#define NUM_OF_BOARDS 18
-#define UDP_OUT_PORT (uint16_t)8672
-#define BUMP_THRESHOLD 40
+// Macros related to the LED lightstrip setups
 #define LED_0_DATA  5
 #define LED_0_CLK   3
 #define LED_1_DATA  8
@@ -23,28 +21,20 @@ FASTLED_USING_NAMESPACE
 #define LED_3_CLK   16  /*A2*/
 #define LED_TYPE    APA102
 #define COLOR_ORDER GRB
+// Number of LEDs in the lightstrip
 #define NUM_LEDS    240
-// Initial brightness of the lightstrip.
+// Initial brightness of the lightstrip
 #define INIT_BRIGHTNESS  127
-// Minimum brightness of the lightstrip.
-#define MIN_BRIGHTNESS 63
-// Maximum brightness of the lightstrip.
-#define MAX_BRIGHTNESS 255
-// Amount of brightness to fade in/out
-#define FADE_BY 15
-// Amount of brightness variation in addition to the FADE_BY value.
-// This means that the light will fade by an additional (0, +FADE_BY_VARIATION) randomly.
-#define FADE_BY_VARIATION 4
-// How long will the fade take
-#define FADE_DURATION 10
-#define FRAMES_PER_SECOND  120
-#define WIPE_UP_DELAY 1
-#define WIPE_DOWN_DELAY 1
-#define BLEND_DURATION 1500
+
 // How long should the code wait before assuming serial module is initialised (milliseconds)
 #define SERIAL_INIT_DELAY 5000
 // How often should it send OSC message if not bumped (milliseconds)
 #define SEND_OSC_EVERY_SO_OFTEN 100
+#define UDP_OUT_PORT (uint16_t)8672
+// The minimum value differences between averaged accelerometer readouts for
+// a motion to be determined to be a major bump.
+// Bump up the value if less sensitivity is desired. 
+#define BUMP_THRESHOLD 40
 
 // Comment out the next line if diagnostic output (over serial) is not needed
 // This can save around 1% -- 2% of program storage
@@ -61,10 +51,6 @@ FASTLED_USING_NAMESPACE
 #endif
 
 // Used for sendOSCStream().
-//const char osc_x[] = "x";
-//const char osc_y[] = "y";
-//const char osc_xy[] = "xy";
-//const char osc_bump[] = "bump";
 enum osc_cmds {
   x,
   y,
@@ -72,28 +58,39 @@ enum osc_cmds {
   bump
 };
 
+// Variables used to determine the current and running averages of
+// accelerometer readouts
 const uint8_t runningAverageCount = 10;
 float runningAverageBufferX[runningAverageCount];
 float runningAverageBufferY[runningAverageCount];
+int runningAverageAcclX = 0;
+int runningAverageAcclY = 0;
 uint16_t nextRunningAverage = 0;
 uint16_t previousAverage = 0;
 uint16_t currentAverage = 0;
 uint8_t currentX = 0;
 uint8_t currentY = 0;
+
+// Counter to determine how long the program has been running.
+// It will increase by 1 every 100 milliseconds. 
+uint32_t timeElapsed = 0;
+
 // Index for the LED (when light is changed incrementally)
 int currentIndex = 0;
+// Flag to be turned on when bouy is bumped
 bool isInAnimation = false;
 uint8_t brightness = INIT_BRIGHTNESS;
-// Fade up or down (1 or -1);
-uint8_t fade_direction = 1;
 
+// Array to contain the LEDS in the lightstrip
 CRGBArray<NUM_LEDS> leds;
-//CRGBPalette16 currentPalette;
-// Two halves of the led strip
+// Divide the strip into two halves
 CRGBSet leds0(leds(0, NUM_LEDS / 2 - 1));
 CRGBSet leds1(leds(NUM_LEDS / 2, NUM_LEDS - 1));
 TBlendType    currentBlending;
 // CHSV startCRGB, endCRGB;
+
+// When the bouy is motionless or relatively still, 
+// The two colours to pulse between.
 uint8_t hue = 0;
 uint8_t sat = 0;
 uint8_t val = 191;
@@ -104,13 +101,15 @@ uint8_t hue1 = 127;
 uint8_t sat1 = 255;
 uint8_t val1 = 127;
 
-// The identification number of the board
+// The predetermined index of the board;
+// The boardID is (boardIndex + 1).
 uint8_t boardIndex = 127;
 
 Adafruit_MPU6050 mpu;
 EthernetUDP Udp;
 
 void setup() {
+  // Initialise LED headers
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(LED_0_DATA,OUTPUT);
   pinMode(LED_0_CLK,OUTPUT);
@@ -121,12 +120,11 @@ void setup() {
   pinMode(LED_3_DATA,OUTPUT);
   pinMode(LED_3_CLK,OUTPUT);
 
+  // Tell FastLED to initialise the lightstrip.
   FastLED.addLeds<LED_TYPE,LED_0_DATA,LED_0_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE,LED_1_DATA,LED_1_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE,LED_2_DATA,LED_2_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE,LED_3_DATA,LED_3_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-//  FastLED.setBrightness(BRIGHTNESS);
-//  currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
 
   Serial.begin(115200);
@@ -135,12 +133,11 @@ void setup() {
   // Use a hardcoded time to wait until Serial is up.
   // Otherwise, the code can hang
   delay(SERIAL_INIT_DELAY);
-//  Serial.flush();
   DIAG_PRINTLN("Serial connection established.");
 
   // Detect arduino board ID
   UniqueID8dump(Serial);
-  // Compare the serial number of the board against known serials. 
+  // Compare the last three bytes of serial number of the board against known serials. 
   // This will be used to set up boardIndex (for OSC) as well as the IP and MAC addresses.
   for (int i = 0; i < numBoards; i++) {
     bool matched = true;
@@ -153,19 +150,20 @@ void setup() {
       DIAG_PRINTLN(boardIndex);
     }
   }
-  // If boardIndex remains the same, it means that the board is not one of the known boards.
+  // If boardIndex remains 127, it means that the board is not one of the known boards.
   if (boardIndex == 127) {
     DIAG_PRINTLN("ERROR - Unknown board.");
     blinkWarningLED();
   }
 
+  // Wait for accelerometer to come online.
   if (!mpu.begin()) {
     DIAG_PRINTLN("Waiting for accelerometer.");
     while (true) delay(10);
   }
   DIAG_PRINTLN("Accelerometer is online.");
 
-  mpu.setFilterBandwidth(MPU6050_BAND_260_HZ);
+  // mpu.setFilterBandwidth(MPU6050_BAND_260_HZ);
 
   // Change the range below to make it more or less sensitive
   mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
@@ -179,8 +177,15 @@ void setup() {
   Ethernet.begin((uint8_t*) macAddr[boardIndex], ipAddr[boardIndex]);
   DIAG_PRINT("Corresponding IP address is ");
   DIAG_PRINTLN(Ethernet.localIP());
-  Udp.begin(UDP_OUT_PORT);
+  if (Udp.begin(UDP_OUT_PORT)) {
+    DIAG_PRINTLN("Local network setup complete.");
+  } else {
+    DIAG_PRINTLN("ERROR - Local network setup failed.");
+    blinkWarningLED();
+  }
 
+  // Turn LED lightstrip on for five seconds. 
+  // Use this time to inspect that all LEDs are functional.
   for (int i = 0; i < NUM_LEDS; i++) {
     leds[i] = CRGB(100, 100, 100);
   }
@@ -191,10 +196,7 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-//  Serial.println("test");
-//  delay(1000);
-
+  // Get accelerometer readout
   sensors_event_t accl, gyro, temp;
   mpu.getEvent(&accl, &gyro, &temp);
   // DIAG_PRINT("Acceleration X: ");
@@ -218,8 +220,6 @@ void loop() {
   if (runningAverageCount <= nextRunningAverage) {
     nextRunningAverage = 0;
   }
-  int runningAverageAcclX = 0;
-  int runningAverageAcclY = 0;
   for (int i = 0; i < runningAverageCount; ++i)
   {
     runningAverageAcclX += runningAverageBufferX[i];
@@ -256,28 +256,6 @@ void loop() {
   DIAG_PRINT(" currentY: ");
   DIAG_PRINTLN(currentY);
 
-//  for (int i = 0; i < NUM_LEDS; i++) {
-//    leds[i].setRGB(100, 100, 100);
-//    leds[i].fadeLightBy(brightness);
-//  }
-//  FastLED.show();
-//
-//  brightness += (FADE_BY + random(0, FADE_BY_VARIATION)) * fade_direction;
-//  if (brightness < MIN_BRIGHTNESS) {
-//    brightness = MIN_BRIGHTNESS;
-//    fade_direction = 1;
-//  }
-//  if (brightness > MAX_BRIGHTNESS) {
-//    brightness = MAX_BRIGHTNESS;
-//    fade_direction = -1;
-//  }
-//
-//  DIAG_PRINT(" brightness: ");
-//  DIAG_PRINTLN(brightness);
-//
-//  delay(FADE_DURATION);
-
-//  static uint8_t hue;
   brightness = beatsin8(20,240,255);
   hue = map(brightness, 100, 255, hue0, hue1);
   sat = map(brightness, 100, 255, sat0, sat1);
@@ -301,9 +279,6 @@ void loop() {
     DIAG_PRINT(" brightness ");
     DIAG_PRINTLN(brightness);
     FastLED.show();
-//    sendOSCStream(xy, currentAverage);
-//    sendOSCStream(x, currentX);
-//    sendOSCStream(y, currentY);
   }
   DIAG_PRINT(" currentIndex: ");
   DIAG_PRINTLN(currentIndex);
@@ -359,7 +334,10 @@ void loop() {
       sendOSCStream(y, currentY);
     }
   }
-////  delay(1);
+
+  EVERY_N_MILLISECONDS (100) {
+    timeElapsed++;
+  }
 }
 
 /*
@@ -393,10 +371,10 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
     DIAG_PRINT(" ");
     DIAG_PRINTLN(currentVal);
   }
-//  Udp.beginPacket(ipAddr[boardIndex], UDP_OUT_PORT);
-//  msg.send(Udp);
-//  Udp.endPacket();
-//  msg.empty();
+ Udp.beginPacket(ipAddr[boardIndex], UDP_OUT_PORT);
+ msg.send(Udp);
+ Udp.endPacket();
+ msg.empty();
 }
 
 // Blink the LED identified as L and halt to show the board is not functioning as designed.
