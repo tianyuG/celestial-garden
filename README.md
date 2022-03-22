@@ -38,7 +38,8 @@ If the correct Arduino patch is uploaded to the board, the LED strip is receivin
   - If serial connection fails to establish, it will still move on to the next steps. However, it will likely not to function, as the ArduinoUniqueID library will require serial library to function. 
   - During the time when Arduino initially boot up and the five seconds waiting period, the bouy will either remain turned off if the Arduino comes from a fresh boot and the lightstrip is connected to power before Arduino, or remain on albeit freeze if Arduino is power cycled while the lightstrip remains in power.
 * From a list of known Arduino board serial numbers, Arduino will determine what MAC address and IP address it should use.
-  - The list of known serial numbers and corresponding MAC and IP addresses are in `hwconf.h`.
+  - The list of known serial numbers and corresponding MAC and IP addresses are in `hwconf.h`. In usage, the arrays are zero-indexed.
+  - The original list of known serial numbers and corresponding MAC and IP addresses are in `BOARD_IDENT.csv`. In usage, the list is one-indexed.
   - Only the last three bytes of the Arduino board serial number are needed.
   - To determine the Arduino board serial number, upload a simple patch to Arduino and select *Tools > Get Board Info* in Arduino IDE, and take note of the last three bytes in the sequence you see in the SN field. For example, the SN of `41B1592C50553158342E3120FF180E34` (currently board #2) has the last three bytes of `0x18`, `0x0E`, and `0x34`.
   - If a board is not documented, the `L` LED on the Arduino board will blink red on and off every 500 milliseconds, and the code will halt.
