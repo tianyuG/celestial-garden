@@ -77,4 +77,6 @@ static IPAddress ipAddr[numBoards] = {
     IPAddress(192, 168, 1, 117), 
     IPAddress(192, 168, 1, 118) 
 };
+
+static IPAddress outAddr(192, 168, 1, 42);
 #endif
