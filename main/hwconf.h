@@ -35,7 +35,7 @@ static const uint8_t uniqId[numBoards][3] = {
 };
 
 // Corresponding MAC addresses of each Ethernet hats
-static uint8_t macAddr[numBoards][6] = {
+static const uint8_t macAddr[numBoards][6] = {
     {0x2C, 0xF7, 0xF1, 0x08, 0x38, 0x1C},
     {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0x73},
     {0x2C, 0xF7, 0xF1, 0x08, 0x39, 0x6E},
@@ -57,7 +57,7 @@ static uint8_t macAddr[numBoards][6] = {
 };
 
 // Corresponding designation of IP addresses
-static IPAddress ipAddr[numBoards] = {
+static const IPAddress ipAddr[numBoards] = {
     IPAddress(192, 168, 1, 101), 
     IPAddress(192, 168, 1, 102), 
     IPAddress(192, 168, 1, 103), 
@@ -78,5 +78,7 @@ static IPAddress ipAddr[numBoards] = {
     IPAddress(192, 168, 1, 118) 
 };
 
-static IPAddress outAddr(192, 168, 1, 42);
+static const IPAddress outAddr(192, 168, 1, 42);
+
+static const unsigned int outPort = 8888;
 #endif

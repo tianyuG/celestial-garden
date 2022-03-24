@@ -10,7 +10,7 @@
 
 FASTLED_USING_NAMESPACE
 
-#define UDP_OUT_PORT (uint16_t)8888
+// #define UDP_OUT_PORT (uint16_t)8888
 #define BUMP_THRESHOLD 20
 #define LED_0_DATA  5
 #define LED_0_CLK   3
@@ -171,17 +171,17 @@ void setup() {
   Ethernet.begin((uint8_t*) macAddr[boardIndex], ipAddr[boardIndex]);
   DIAG_PRINT("Corresponding IP address is ");
   DIAG_PRINTLN(Ethernet.localIP());
-//  Udp.begin(UDP_OUT_PORT);
+ Udp.begin(outPort);
 
-  if (Udp.begin(UDP_OUT_PORT))
-  {
-    DIAG_PRINTLN("Local network setup complete.");
-  }
-  else
-  {
-    DIAG_PRINTLN("ERROR - Local network setup failed.");
-    blinkWarningLED();
-  }
+  // if (Udp.begin(outPort))
+  // {
+  //   DIAG_PRINTLN("Local network setup complete.");
+  // }
+  // else
+  // {
+  //   DIAG_PRINTLN("ERROR - Local network setup failed.");
+  //   blinkWarningLED();
+  // }
 
   for (int i = 0; i < NUM_LEDS; i++) {
     leds[i] = CRGB(100, 100, 100);
@@ -358,10 +358,9 @@ void loop() {
  */
 void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
   char boardIdent[12];
-  OSCMessage msg;
   if (cmd == bump) {
     sprintf(boardIdent, "/bouy0%d/xy", boardIndex + 1);
-    msg.add(boardIdent).add("bang");
+    // msg.add(boardIdent).add("bang");
     DIAG_PRINT(boardIdent);
     DIAG_PRINTLN(" bang");
   } else {
@@ -376,12 +375,15 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
         sprintf(boardIdent, "/bouy0%d/xy", boardIndex + 1);
         break;
     }
-    msg.add(boardIdent).add(currentVal);
+
+    // msg.add(boardIdent).add(currentVal);
     DIAG_PRINT(boardIdent);
     DIAG_PRINT(" ");
     DIAG_PRINTLN(currentVal);
   }
-  Udp.beginPacket(outAddr, UDP_OUT_PORT);
+  OSCMessage msg(boardIdent);
+  (cmd == bump) ? msg.add("bang") : msg.add(currentVal);
+  Udp.beginPacket(outAddr, outPort);
   DIAG_PRINT("!!! UDP rmt "); 
   DIAG_PRINT(Udp.remoteIP());
   DIAG_PRINT(" port ");
