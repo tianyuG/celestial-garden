@@ -10,7 +10,6 @@
 
 FASTLED_USING_NAMESPACE
 
-//#define NUM_OF_BOARDS 18
 #define UDP_OUT_PORT (uint16_t)8888
 #define BUMP_THRESHOLD 20
 #define LED_0_DATA  5
@@ -30,17 +29,6 @@ FASTLED_USING_NAMESPACE
 #define MIN_BRIGHTNESS 63
 // Maximum brightness of the lightstrip.
 #define MAX_BRIGHTNESS 255
-// Amount of brightness to fade in/out
-#define FADE_BY 15
-// Amount of brightness variation in addition to the FADE_BY value.
-// This means that the light will fade by an additional (0, +FADE_BY_VARIATION) randomly.
-#define FADE_BY_VARIATION 4
-// How long will the fade take
-#define FADE_DURATION 10
-#define FRAMES_PER_SECOND  120
-#define WIPE_UP_DELAY 1
-#define WIPE_DOWN_DELAY 1
-#define BLEND_DURATION 1500
 // How long should the code wait before assuming serial module is initialised (milliseconds)
 #define SERIAL_INIT_DELAY 5000
 // How often should it send OSC message if not bumped (milliseconds)
@@ -329,6 +317,7 @@ void loop() {
       delay(IN_CYCLE_DELAY);
       FastLED.show();
     }
+  }
 //    if (currentIndex < NUM_LEDS / 2) {
 //      leds0[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
 //      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1] = CRGB(rgbX, 0, rgbY);
@@ -348,9 +337,6 @@ void loop() {
 //      leds1[NUM_LEDS - 1 - currentIndex].g = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].g);
 //      leds1[NUM_LEDS - 1 - currentIndex].b = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].b);
 //    }
-    
-    
-  }
     
   previousAverage = currentAverage;
 
