@@ -45,6 +45,10 @@ FASTLED_USING_NAMESPACE
 #define SERIAL_INIT_DELAY 5000
 // How often should it send OSC message if not bumped (milliseconds)
 #define SEND_OSC_EVERY_SO_OFTEN 100
+// How many LEDs should be turned on per cycle
+#define LIGHTS_PER_CYCLE 3
+// How long should Arduino wait after lighting up each light within a cycle
+#define IN_CYCLE_DELAY 1
 
 // Comment out the next line if diagnostic output (over serial) is not needed
 // This can save around 1% -- 2% of program storage
@@ -266,27 +270,6 @@ void loop() {
 //  DIAG_PRINT(" currentY: ");
 //  DIAG_PRINTLN(currentY);
 
-//  for (int i = 0; i < NUM_LEDS; i++) {
-//    leds[i].setRGB(100, 100, 100);
-//    leds[i].fadeLightBy(brightness);
-//  }
-//  FastLED.show();
-//
-//  brightness += (FADE_BY + random(0, FADE_BY_VARIATION)) * fade_direction;
-//  if (brightness < MIN_BRIGHTNESS) {
-//    brightness = MIN_BRIGHTNESS;
-//    fade_direction = 1;
-//  }
-//  if (brightness > MAX_BRIGHTNESS) {
-//    brightness = MAX_BRIGHTNESS;
-//    fade_direction = -1;
-//  }
-//
-//  DIAG_PRINT(" brightness: ");
-//  DIAG_PRINTLN(brightness);
-//
-//  delay(FADE_DURATION);
-
 //  static uint8_t hue;
   brightness = beatsin8(20,240,255);
   hue = map(brightness, 100, 255, hue0, hue1);
@@ -337,27 +320,36 @@ void loop() {
     }
   }
   if (isInAnimation) {
-    if (currentIndex < NUM_LEDS / 2) {
-      leds0[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
-      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1] = CRGB(rgbX, 0, rgbY);
-      leds0[currentIndex - 1].r = dim8_video(leds0[currentIndex - 1].r);
-      leds0[currentIndex - 1].g = dim8_video(leds0[currentIndex - 1].g);
-      leds0[currentIndex - 1].b = dim8_video(leds0[currentIndex - 1].b);
-      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].r = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].r);
-      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].g = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].g);
-      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].b = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].b);
-    } else {
-      leds0[currentIndex - NUM_LEDS / 2] = CHSV(hue, sat, brightness);
-      leds1[NUM_LEDS - 1 - currentIndex] = CHSV(hue, sat, brightness);
-      leds0[currentIndex - NUM_LEDS / 2].r = dim8_video(leds0[currentIndex - NUM_LEDS / 2].r);
-      leds0[currentIndex - NUM_LEDS / 2].g = dim8_video(leds0[currentIndex - NUM_LEDS / 2].g);
-      leds0[currentIndex - NUM_LEDS / 2].b = dim8_video(leds0[currentIndex - NUM_LEDS / 2].b);
-      leds1[NUM_LEDS - 1 - currentIndex].r = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].r);
-      leds1[NUM_LEDS - 1 - currentIndex].g = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].g);
-      leds1[NUM_LEDS - 1 - currentIndex].b = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].b);
+    for (int i = 0; i < LIGHTS_PER_CYCLE; i++) {
+      if (++currentIndex < NUM_LEDS) leds[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
+
+      leds[currentIndex - 1].r = dim8_video(leds[currentIndex - 1].r);
+      leds[currentIndex - 1].g = dim8_video(leds[currentIndex - 1].g);
+      leds[currentIndex - 1].b = dim8_video(leds[currentIndex - 1].b);
+      delay(IN_CYCLE_DELAY);
+      FastLED.show();
     }
+//    if (currentIndex < NUM_LEDS / 2) {
+//      leds0[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
+//      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1] = CRGB(rgbX, 0, rgbY);
+//      leds0[currentIndex - 1].r = dim8_video(leds0[currentIndex - 1].r);
+//      leds0[currentIndex - 1].g = dim8_video(leds0[currentIndex - 1].g);
+//      leds0[currentIndex - 1].b = dim8_video(leds0[currentIndex - 1].b);
+//      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].r = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].r);
+//      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].g = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].g);
+//      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].b = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].b);
+//    } else {
+//      leds0[currentIndex - NUM_LEDS / 2] = CHSV(hue, sat, brightness);
+//      leds1[NUM_LEDS - 1 - currentIndex] = CHSV(hue, sat, brightness);
+//      leds0[currentIndex - NUM_LEDS / 2].r = dim8_video(leds0[currentIndex - NUM_LEDS / 2].r);
+//      leds0[currentIndex - NUM_LEDS / 2].g = dim8_video(leds0[currentIndex - NUM_LEDS / 2].g);
+//      leds0[currentIndex - NUM_LEDS / 2].b = dim8_video(leds0[currentIndex - NUM_LEDS / 2].b);
+//      leds1[NUM_LEDS - 1 - currentIndex].r = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].r);
+//      leds1[NUM_LEDS - 1 - currentIndex].g = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].g);
+//      leds1[NUM_LEDS - 1 - currentIndex].b = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].b);
+//    }
     
-    FastLED.show();
+    
   }
     
   previousAverage = currentAverage;
