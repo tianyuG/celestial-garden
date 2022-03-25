@@ -12,6 +12,9 @@
 // Total number of boards that are documented
 static const uint8_t numBoards = 18;
 
+// Total number of LED lights in the lightstrip
+static const uint16_t numLeds = 240;
+
 // Last three bytes of the serial number of the Arduino board in sequence
 static const uint8_t uniqId[numBoards][3] = {
     {0x17, 0x28, 0x3B},

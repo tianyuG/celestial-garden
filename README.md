@@ -41,7 +41,7 @@ If the correct Arduino patch is uploaded to the board, the LED strip is receivin
   - The list of known serial numbers and corresponding MAC and IP addresses are in `hwconf.h`. In usage, the arrays are zero-indexed.
   - The original list of known serial numbers and corresponding MAC and IP addresses are in `BOARD_IDENT.csv`. In usage, the list is one-indexed.
   - Only the last three bytes of the Arduino board serial number are needed.
-  - To determine the Arduino board serial number, upload a simple patch to Arduino and select *Tools > Get Board Info* in Arduino IDE, and take note of the last three bytes in the sequence you see in the SN field. For example, the SN of `41B1592C50553158342E3120FF180E34` (currently board #2) has the last three bytes of `0x18`, `0x0E`, and `0x34`.
+  - To determine the Arduino board serial number, upload a simple patch to Arduino and select *Tools > Get Board Info* in Arduino IDE, and take note of the last three bytes in the sequence you see in the S/N field. For example, the S/N of `41B1592C50553158342E3120FF180E34` (currently board #2) has the last three bytes of `0x18`, `0x0E`, and `0x34`. Consequently, the MAC address (the second entry, or index 1) is `2C:F7:F1:08:39:73` (The Serial Monitor will likely not report the leading zero of `08`), and the IP address (ditto) is `192.168.1.102`.
   - If a board is not documented, the `L` LED on the Arduino board will blink red on and off every 500 milliseconds, and the code will halt.
 * Arduino will wait until the accelerometer comes online and apply correct settings.
 * Arduino will setup local network by using known MAC and IP addresses.

@@ -10,8 +10,6 @@
 
 FASTLED_USING_NAMESPACE
 
-// #define UDP_OUT_PORT (uint16_t)8888
-#define BUMP_THRESHOLD 20
 #define LED_0_DATA  5
 #define LED_0_CLK   3
 #define LED_1_DATA  8
@@ -22,7 +20,6 @@ FASTLED_USING_NAMESPACE
 #define LED_3_CLK   16  /*A2*/
 #define LED_TYPE    APA102
 #define COLOR_ORDER GRB
-#define NUM_LEDS    240
 // Initial brightness of the lightstrip.
 #define INIT_BRIGHTNESS  255
 // Minimum brightness of the lightstrip.
@@ -37,6 +34,8 @@ FASTLED_USING_NAMESPACE
 #define LIGHTS_PER_CYCLE 3
 // How long should Arduino wait after lighting up each light within a cycle
 #define IN_CYCLE_DELAY 1
+// The threshold for a motion to be determined to be a bump
+#define BUMP_THRESHOLD 20
 
 // Comment out the next line if diagnostic output (over serial) is not needed
 // This can save around 1% -- 2% of program storage
@@ -53,10 +52,6 @@ FASTLED_USING_NAMESPACE
 #endif
 
 // Used for sendOSCStream().
-//const char osc_x[] = "x";
-//const char osc_y[] = "y";
-//const char osc_xy[] = "xy";
-//const char osc_bump[] = "bump";
 enum osc_cmds {
   x,
   y,
@@ -79,16 +74,17 @@ uint8_t brightness = INIT_BRIGHTNESS;
 // Fade up or down (1 or -1);
 uint8_t fade_direction = 1;
 
-CRGBArray<NUM_LEDS> leds;
+CRGBArray<numLeds> leds;
 //CRGBPalette16 currentPalette;
 // Two halves of the led strip
-CRGBSet leds0(leds(0, NUM_LEDS / 2 - 1));
-CRGBSet leds1(leds(NUM_LEDS / 2, NUM_LEDS - 1));
+CRGBSet leds0(leds(0, numLeds / 2 - 1));
+CRGBSet leds1(leds(numLeds / 2, numLeds - 1));
 TBlendType    currentBlending;
 // CHSV startCRGB, endCRGB;
 uint8_t hue = 0;
 uint8_t sat = 0;
 uint8_t val = 191;
+// Two of the colours to pulse between
 uint8_t hue0 = 0;
 uint8_t sat0 = 0;
 uint8_t val0 = 191;
@@ -113,10 +109,10 @@ void setup() {
   pinMode(LED_3_DATA,OUTPUT);
   pinMode(LED_3_CLK,OUTPUT);
 
-  FastLED.addLeds<LED_TYPE,LED_0_DATA,LED_0_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_1_DATA,LED_1_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_2_DATA,LED_2_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_3_DATA,LED_3_CLK,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_0_DATA,LED_0_CLK,COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_1_DATA,LED_1_CLK,COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_2_DATA,LED_2_CLK,COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_3_DATA,LED_3_CLK,COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
 //  FastLED.setBrightness(BRIGHTNESS);
 //  currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
@@ -171,19 +167,19 @@ void setup() {
   Ethernet.begin((uint8_t*) macAddr[boardIndex], ipAddr[boardIndex]);
   DIAG_PRINT("Corresponding IP address is ");
   DIAG_PRINTLN(Ethernet.localIP());
- Udp.begin(outPort);
+  
+  // Udp.begin(outPort);
+  if (Udp.begin(outPort))
+  {
+    DIAG_PRINTLN("Local network setup complete.");
+  }
+  else
+  {
+    DIAG_PRINTLN("ERROR - Local network setup failed.");
+    blinkWarningLED();
+  }
 
-  // if (Udp.begin(outPort))
-  // {
-  //   DIAG_PRINTLN("Local network setup complete.");
-  // }
-  // else
-  // {
-  //   DIAG_PRINTLN("ERROR - Local network setup failed.");
-  //   blinkWarningLED();
-  // }
-
-  for (int i = 0; i < NUM_LEDS; i++) {
+  for (int i = 0; i < numLeds; i++) {
     leds[i] = CRGB(100, 100, 100);
   }
   DIAG_PRINTLN("Lightstrip will now light up for five seconds.");
@@ -193,10 +189,6 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-//  Serial.println("test");
-//  delay(1000);
-
   sensors_event_t accl, gyro, temp;
   mpu.getEvent(&accl, &gyro, &temp);
   // DIAG_PRINT("Acceleration X: ");
@@ -240,11 +232,11 @@ void loop() {
   uint8_t diffY = abs(scaledY - 127);
   uint8_t rgbX = map(diffX, 0, 20, 40, 255);
   uint8_t rgbY = map(diffY, 0, 20, 40, 255);
-//
-//  DIAG_PRINT(" rgbX: ");
-//  DIAG_PRINT(rgbX);
-//  DIAG_PRINT(" rgbY: ");
-//  DIAG_PRINTLN(rgbY);
+
+ DIAG_PRINT(">>>> diffX: ");
+ DIAG_PRINT(diffX);
+ DIAG_PRINT(" diffY: ");
+ DIAG_PRINTLN(diffY);
 
   currentAverage = (rgbX + rgbY) / 2;
   currentX = rgbX;
@@ -260,20 +252,20 @@ void loop() {
 
 //  static uint8_t hue;
   brightness = beatsin8(20,240,255) - (diffX + diffY) / 4;
-  hue = map(brightness, 100, 255, hue0, hue1);
-  sat = map(brightness, 100, 255, sat0, sat1);
+  hue = map(brightness, 100, 255, hue0, hue1) + (diffX + diffY) / 8;
+  sat = map(brightness, 100, 255, sat0, sat1) - (diffX + diffY) / 6;
   // EVERY_N_MILLISECONDS (20) {
   if (!isInAnimation) {
-    for (int i = 0; i < NUM_LEDS / 2; i++) {
+    for (int i = 0; i < numLeds / 2; i++) {
       leds0[i] = CHSV(hue, sat, brightness);
-      leds1[NUM_LEDS / 2 - 1 - i] = CHSV(hue, sat, brightness);
+      leds1[numLeds / 2 - 1 - i] = CHSV(hue, sat, brightness);
   
       leds0[i].r = dim8_video(leds0[i].r);
       leds0[i].g = dim8_video(leds0[i].g);
       leds0[i].b = dim8_video(leds0[i].b);
-      leds1[NUM_LEDS / 2 - 1 - i].r = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].r);
-      leds1[NUM_LEDS / 2 - 1 - i].g = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].g);
-      leds1[NUM_LEDS / 2 - 1 - i].b = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].b);
+      leds1[numLeds / 2 - 1 - i].r = dim8_video(leds1[numLeds / 2 - 1 - i].r);
+      leds1[numLeds / 2 - 1 - i].g = dim8_video(leds1[numLeds / 2 - 1 - i].g);
+      leds1[numLeds / 2 - 1 - i].b = dim8_video(leds1[numLeds / 2 - 1 - i].b);
       sendOSCStream(xy, currentAverage);
       sendOSCStream(x, currentX);
       sendOSCStream(y, currentY);
@@ -298,7 +290,7 @@ void loop() {
   DIAG_PRINT(" brightness ");
   DIAG_PRINTLN(brightness);
   // To make sure that currentIndex wraps back to 0 when the last LED has been lit
-  if (currentIndex >= NUM_LEDS) {
+  if (currentIndex >= numLeds) {
     isInAnimation = false;
     currentIndex = 0;
     sendOSCStream(xy, currentAverage);
@@ -313,7 +305,7 @@ void loop() {
   }
   if (isInAnimation) {
     for (int i = 0; i < LIGHTS_PER_CYCLE; i++) {
-      if (++currentIndex < NUM_LEDS) leds[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
+      if (++currentIndex < numLeds) leds[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
 
       DIAG_PRINT(">>>> currentIndex: ");
       DIAG_PRINTLN(currentIndex);
@@ -327,36 +319,27 @@ void loop() {
       FastLED.show();
     }
   }
-//    if (currentIndex < NUM_LEDS / 2) {
+//    if (currentIndex < numLeds / 2) {
 //      leds0[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
-//      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1] = CRGB(rgbX, 0, rgbY);
+//      leds1[numLeds / 2 - 1 - currentIndex - 1] = CRGB(rgbX, 0, rgbY);
 //      leds0[currentIndex - 1].r = dim8_video(leds0[currentIndex - 1].r);
 //      leds0[currentIndex - 1].g = dim8_video(leds0[currentIndex - 1].g);
 //      leds0[currentIndex - 1].b = dim8_video(leds0[currentIndex - 1].b);
-//      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].r = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].r);
-//      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].g = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].g);
-//      leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].b = dim8_video(leds1[NUM_LEDS / 2 - 1 - currentIndex - 1].b);
+//      leds1[numLeds / 2 - 1 - currentIndex - 1].r = dim8_video(leds1[numLeds / 2 - 1 - currentIndex - 1].r);
+//      leds1[numLeds / 2 - 1 - currentIndex - 1].g = dim8_video(leds1[numLeds / 2 - 1 - currentIndex - 1].g);
+//      leds1[numLeds / 2 - 1 - currentIndex - 1].b = dim8_video(leds1[numLeds / 2 - 1 - currentIndex - 1].b);
 //    } else {
-//      leds0[currentIndex - NUM_LEDS / 2] = CHSV(hue, sat, brightness);
-//      leds1[NUM_LEDS - 1 - currentIndex] = CHSV(hue, sat, brightness);
-//      leds0[currentIndex - NUM_LEDS / 2].r = dim8_video(leds0[currentIndex - NUM_LEDS / 2].r);
-//      leds0[currentIndex - NUM_LEDS / 2].g = dim8_video(leds0[currentIndex - NUM_LEDS / 2].g);
-//      leds0[currentIndex - NUM_LEDS / 2].b = dim8_video(leds0[currentIndex - NUM_LEDS / 2].b);
-//      leds1[NUM_LEDS - 1 - currentIndex].r = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].r);
-//      leds1[NUM_LEDS - 1 - currentIndex].g = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].g);
-//      leds1[NUM_LEDS - 1 - currentIndex].b = dim8_video(leds1[NUM_LEDS - 1 - currentIndex].b);
+//      leds0[currentIndex - numLeds / 2] = CHSV(hue, sat, brightness);
+//      leds1[numLeds - 1 - currentIndex] = CHSV(hue, sat, brightness);
+//      leds0[currentIndex - numLeds / 2].r = dim8_video(leds0[currentIndex - numLeds / 2].r);
+//      leds0[currentIndex - numLeds / 2].g = dim8_video(leds0[currentIndex - numLeds / 2].g);
+//      leds0[currentIndex - numLeds / 2].b = dim8_video(leds0[currentIndex - numLeds / 2].b);
+//      leds1[numLeds - 1 - currentIndex].r = dim8_video(leds1[numLeds - 1 - currentIndex].r);
+//      leds1[numLeds - 1 - currentIndex].g = dim8_video(leds1[numLeds - 1 - currentIndex].g);
+//      leds1[numLeds - 1 - currentIndex].b = dim8_video(leds1[numLeds - 1 - currentIndex].b);
 //    }
-    
+  
   previousAverage = currentAverage;
-
-  // EVERY_N_MILLISECONDS (SEND_OSC_EVERY_SO_OFTEN) {
-  //   if(!isInAnimation) {
-  //     sendOSCStream(xy, currentAverage);
-  //     sendOSCStream(x, currentX);
-  //     sendOSCStream(y, currentY);
-  //   }
-  // }
-////  delay(1);
 }
 
 /*
