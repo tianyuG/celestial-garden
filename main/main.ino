@@ -259,7 +259,7 @@ void loop() {
 //  DIAG_PRINTLN(currentY);
 
 //  static uint8_t hue;
-  brightness = beatsin8(20,240,255);
+  brightness = beatsin8(20,240,255) - (diffX + diffY) / 4;
   hue = map(brightness, 100, 255, hue0, hue1);
   sat = map(brightness, 100, 255, sat0, sat1);
   // EVERY_N_MILLISECONDS (20) {
@@ -274,6 +274,9 @@ void loop() {
       leds1[NUM_LEDS / 2 - 1 - i].r = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].r);
       leds1[NUM_LEDS / 2 - 1 - i].g = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].g);
       leds1[NUM_LEDS / 2 - 1 - i].b = dim8_video(leds1[NUM_LEDS / 2 - 1 - i].b);
+      sendOSCStream(xy, currentAverage);
+      sendOSCStream(x, currentX);
+      sendOSCStream(y, currentY);
     }
     DIAG_PRINT("= hue ");
     DIAG_PRINT(hue);
@@ -294,7 +297,8 @@ void loop() {
   DIAG_PRINT(sat);
   DIAG_PRINT(" brightness ");
   DIAG_PRINTLN(brightness);
-  if (currentIndex++ > NUM_LEDS) {
+  // To make sure that currentIndex wraps back to 0 when the last LED has been lit
+  if (currentIndex >= NUM_LEDS) {
     isInAnimation = false;
     currentIndex = 0;
     sendOSCStream(xy, currentAverage);
@@ -311,10 +315,15 @@ void loop() {
     for (int i = 0; i < LIGHTS_PER_CYCLE; i++) {
       if (++currentIndex < NUM_LEDS) leds[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
 
+      DIAG_PRINT(">>>> currentIndex: ");
+      DIAG_PRINTLN(currentIndex);
       leds[currentIndex - 1].r = dim8_video(leds[currentIndex - 1].r);
       leds[currentIndex - 1].g = dim8_video(leds[currentIndex - 1].g);
       leds[currentIndex - 1].b = dim8_video(leds[currentIndex - 1].b);
       delay(IN_CYCLE_DELAY);
+      sendOSCStream(xy, currentAverage);
+      sendOSCStream(x, currentX);
+      sendOSCStream(y, currentY);
       FastLED.show();
     }
   }
@@ -340,13 +349,13 @@ void loop() {
     
   previousAverage = currentAverage;
 
-  EVERY_N_MILLISECONDS (SEND_OSC_EVERY_SO_OFTEN) {
-    if(!isInAnimation) {
-      sendOSCStream(xy, currentAverage);
-      sendOSCStream(x, currentX);
-      sendOSCStream(y, currentY);
-    }
-  }
+  // EVERY_N_MILLISECONDS (SEND_OSC_EVERY_SO_OFTEN) {
+  //   if(!isInAnimation) {
+  //     sendOSCStream(xy, currentAverage);
+  //     sendOSCStream(x, currentX);
+  //     sendOSCStream(y, currentY);
+  //   }
+  // }
 ////  delay(1);
 }
 
