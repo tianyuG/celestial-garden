@@ -69,6 +69,8 @@ uint8_t currentX = 0;
 uint8_t currentY = 0;
 // Index for the LED (when light is changed incrementally)
 int currentIndex = 0;
+// Index for the LED (when the light pulses)
+int currentRunningIndex = 0;
 bool isInAnimation = false;
 uint8_t brightness = INIT_BRIGHTNESS;
 // Fade up or down (1 or -1);
@@ -156,7 +158,7 @@ void setup() {
   mpu.setFilterBandwidth(MPU6050_BAND_260_HZ);
 
   // Change the range below to make it more or less sensitive
-  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
+  mpu.setAccelerometerRange(MPU6050_RANGE_4_G);
 
   DIAG_PRINT("Corresponding MAC address is ");
   for (int i = 0; i < 6; i++) {
@@ -191,21 +193,26 @@ void setup() {
 void loop() {
   sensors_event_t accl, gyro, temp;
   mpu.getEvent(&accl, &gyro, &temp);
-  // DIAG_PRINT("Acceleration X: ");
-  // DIAG_PRINT(accl.acceleration.x);
-  // DIAG_PRINT(", Y: ");
-  // DIAG_PRINT(accl.acceleration.y);
-  // DIAG_PRINT(", Z: ");
-  // DIAG_PRINT(accl.acceleration.z);
-  // DIAG_PRINTLN(" m/s^2");
+   DIAG_PRINT("Acceleration X: ");
+   DIAG_PRINT(accl.acceleration.x);
+   DIAG_PRINT(", Y: ");
+   DIAG_PRINT(accl.acceleration.y);
+   DIAG_PRINT(", Z: ");
+   DIAG_PRINT(accl.acceleration.z);
+   DIAG_PRINTLN(" m/s^2");
 
   int rawAcclX = accl.acceleration.x * 100;
   int rawAcclY = accl.acceleration.y * 100;
 
+  sendRawAcclOSC(x, accl.acceleration.x);
+  sendRawAcclOSC(y, accl.acceleration.y);
 //  DIAG_PRINT("rawAcclX: ");
 //  DIAG_PRINT(rawAcclX);
 //  DIAG_PRINT(" rawAcclY: ");
 //  DIAG_PRINTLN(rawAcclY);
+//  sendOSCStream(xy, currentAverage);
+//    sendOSCStream(x, rawAcclX);
+//    sendOSCStream(y, rawAcclY);
 
   runningAverageBufferX[nextRunningAverage++] = rawAcclX;
   runningAverageBufferY[nextRunningAverage] = rawAcclY;
@@ -233,14 +240,17 @@ void loop() {
   uint8_t rgbX = map(diffX, 0, 20, 40, 255);
   uint8_t rgbY = map(diffY, 0, 20, 40, 255);
 
- DIAG_PRINT(">>>> diffX: ");
- DIAG_PRINT(diffX);
- DIAG_PRINT(" diffY: ");
- DIAG_PRINTLN(diffY);
+//TODO
+// DIAG_PRINT(">>>> diffX: ");
+// DIAG_PRINT(diffX);
+// DIAG_PRINT(" diffY: ");
+// DIAG_PRINTLN(diffY);
 
   currentAverage = (rgbX + rgbY) / 2;
   currentX = rgbX;
   currentY = rgbY;
+
+  //TODO
 //  DIAG_PRINT(" currentAverage: ");
 //  DIAG_PRINT(currentAverage);
 //  DIAG_PRINT(" previousAverage: ");
@@ -256,46 +266,49 @@ void loop() {
   sat = map(brightness, 100, 255, sat0, sat1) - (diffX + diffY) / 6;
   // EVERY_N_MILLISECONDS (20) {
   if (!isInAnimation) {
-    for (int i = 0; i < numLeds / 2; i++) {
-      leds0[i] = CHSV(hue, sat, brightness);
-      leds1[numLeds / 2 - 1 - i] = CHSV(hue, sat, brightness);
+    // for (int i = 0; i < numLeds / 2; i++) {
+      if (currentRunningIndex >= numLeds) currentRunningIndex = 0;
+      leds0[currentRunningIndex] = CHSV(hue, sat, brightness);
+      leds1[numLeds / 2 - 1 - currentRunningIndex] = CHSV(hue, sat, brightness);
   
-      leds0[i].r = dim8_video(leds0[i].r);
-      leds0[i].g = dim8_video(leds0[i].g);
-      leds0[i].b = dim8_video(leds0[i].b);
-      leds1[numLeds / 2 - 1 - i].r = dim8_video(leds1[numLeds / 2 - 1 - i].r);
-      leds1[numLeds / 2 - 1 - i].g = dim8_video(leds1[numLeds / 2 - 1 - i].g);
-      leds1[numLeds / 2 - 1 - i].b = dim8_video(leds1[numLeds / 2 - 1 - i].b);
-      sendOSCStream(xy, currentAverage);
-      sendOSCStream(x, currentX);
-      sendOSCStream(y, currentY);
-    }
-    DIAG_PRINT("= hue ");
-    DIAG_PRINT(hue);
-    DIAG_PRINT(" sat ");
-    DIAG_PRINT(sat);
-    DIAG_PRINT(" brightness ");
-    DIAG_PRINTLN(brightness);
+      leds0[currentRunningIndex].r = dim8_video(leds0[currentRunningIndex].r);
+      leds0[currentRunningIndex].g = dim8_video(leds0[currentRunningIndex].g);
+      leds0[currentRunningIndex].b = dim8_video(leds0[currentRunningIndex].b);
+      leds1[numLeds / 2 - 1 - currentRunningIndex].r = dim8_video(leds1[numLeds / 2 - 1 - currentRunningIndex].r);
+      leds1[numLeds / 2 - 1 - currentRunningIndex].g = dim8_video(leds1[numLeds / 2 - 1 - currentRunningIndex].g);
+      leds1[numLeds / 2 - 1 - currentRunningIndex].b = dim8_video(leds1[numLeds / 2 - 1 - currentRunningIndex++].b);
+      //TODO
+//      sendOSCStream(xy, currentAverage);
+//      sendOSCStream(x, currentX);
+//      sendOSCStream(y, currentY);
+    // }
+//    DIAG_PRINT("= hue ");
+//    DIAG_PRINT(hue);
+//    DIAG_PRINT(" sat ");
+//    DIAG_PRINT(sat);
+//    DIAG_PRINT(" brightness ");
+//    DIAG_PRINTLN(brightness);
     FastLED.show();
 //    sendOSCStream(xy, currentAverage);
 //    sendOSCStream(x, currentX);
 //    sendOSCStream(y, currentY);
   }
-  DIAG_PRINT(" currentIndex: ");
-  DIAG_PRINTLN(currentIndex);
-  DIAG_PRINT("! hue ");
-  DIAG_PRINT(hue);
-  DIAG_PRINT(" sat ");
-  DIAG_PRINT(sat);
-  DIAG_PRINT(" brightness ");
-  DIAG_PRINTLN(brightness);
+//  DIAG_PRINT(" currentIndex: ");
+//  DIAG_PRINTLN(currentIndex);
+//  DIAG_PRINT("! hue ");
+//  DIAG_PRINT(hue);
+//  DIAG_PRINT(" sat ");
+//  DIAG_PRINT(sat);
+//  DIAG_PRINT(" brightness ");
+//  DIAG_PRINTLN(brightness);
   // To make sure that currentIndex wraps back to 0 when the last LED has been lit
   if (currentIndex >= numLeds) {
     isInAnimation = false;
     currentIndex = 0;
-    sendOSCStream(xy, currentAverage);
-    sendOSCStream(x, currentX);
-    sendOSCStream(y, currentY);
+    // TODO
+//    sendOSCStream(xy, currentAverage);
+//    sendOSCStream(x, currentX);
+//    sendOSCStream(y, currentY);
   } else {
     if (abs(currentAverage - previousAverage) > BUMP_THRESHOLD) {
       if (isInAnimation) currentIndex = 0;
@@ -307,15 +320,15 @@ void loop() {
     for (int i = 0; i < LIGHTS_PER_CYCLE; i++) {
       if (++currentIndex < numLeds) leds[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
 
-      DIAG_PRINT(">>>> currentIndex: ");
-      DIAG_PRINTLN(currentIndex);
+//      DIAG_PRINT(">>>> currentIndex: ");
+//      DIAG_PRINTLN(currentIndex);
       leds[currentIndex - 1].r = dim8_video(leds[currentIndex - 1].r);
       leds[currentIndex - 1].g = dim8_video(leds[currentIndex - 1].g);
       leds[currentIndex - 1].b = dim8_video(leds[currentIndex - 1].b);
-      delay(IN_CYCLE_DELAY);
-      sendOSCStream(xy, currentAverage);
-      sendOSCStream(x, currentX);
-      sendOSCStream(y, currentY);
+      // TODO
+//      sendOSCStream(xy, currentAverage);
+//      sendOSCStream(x, currentX);
+//      sendOSCStream(y, currentY);
       FastLED.show();
     }
   }
@@ -351,20 +364,20 @@ void loop() {
 void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
   char boardIdent[12];
   if (cmd == bump) {
-    sprintf(boardIdent, "/bouy0%d/xy", boardIndex + 1);
+    sprintf(boardIdent, "/pod0%d/xy", boardIndex + 1);
     // msg.add(boardIdent).add("bang");
     DIAG_PRINT(boardIdent);
     DIAG_PRINTLN(" bang");
   } else {
     switch(cmd) {
       case(x):
-        sprintf(boardIdent, "/bouy0%d/x", boardIndex + 1);
+        sprintf(boardIdent, "/pod0%d/x", boardIndex + 1);
         break;
       case(y):
-        sprintf(boardIdent, "/bouy0%d/y", boardIndex + 1);
+        sprintf(boardIdent, "/pod0%d/y", boardIndex + 1);
         break;
       case(xy):
-        sprintf(boardIdent, "/bouy0%d/xy", boardIndex + 1);
+        sprintf(boardIdent, "/pod0%d/xy", boardIndex + 1);
         break;
     }
 
@@ -376,10 +389,28 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
   OSCMessage msg(boardIdent);
   (cmd == bump) ? msg.add("bang") : msg.add(currentVal);
   Udp.beginPacket(outAddr, outPort);
-  DIAG_PRINT("!!! UDP rmt "); 
-  DIAG_PRINT(Udp.remoteIP());
-  DIAG_PRINT(" port ");
-  DIAG_PRINTLN(Udp.remotePort());
+//  DIAG_PRINT("!!! UDP rmt "); 
+//  DIAG_PRINT(Udp.remoteIP());
+//  DIAG_PRINT(" port ");
+//  DIAG_PRINTLN(Udp.remotePort());
+  msg.send(Udp);
+  Udp.endPacket();
+  msg.empty();
+}
+
+void sendRawAcclOSC(osc_cmds cmd, float currentVal) {
+  char boardIdent[12];
+  switch(cmd) {
+    case(x):
+      sprintf(boardIdent, "/pod0%d/acclx", boardIndex + 1);
+      break;
+    case(y):
+      sprintf(boardIdent, "/pod0%d/accly", boardIndex + 1);
+      break;
+  }
+  OSCMessage msg(boardIdent);
+  msg.add(currentVal);
+  Udp.beginPacket(outAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
   msg.empty();
