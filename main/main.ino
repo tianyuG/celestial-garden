@@ -18,33 +18,33 @@
 #define ENABLE_OTA 1
 
 #ifdef DISPLAY_DIAG
-  #define DIAG_PRINT(ARG1) Serial.print(ARG1)
-  #define DIAG_PRINTHEX(ARG1) Serial.print(ARG1, HEX)
-  #define DIAG_PRINTLN(ARG1) Serial.println(ARG1)
+#define DIAG_PRINT(ARG1) Serial.print(ARG1)
+#define DIAG_PRINTHEX(ARG1) Serial.print(ARG1, HEX)
+#define DIAG_PRINTLN(ARG1) Serial.println(ARG1)
 #else
-  #define DIAG_PRINT(ARG1) ((void) 0)
-  #define DIAG_PRINTHEX(ARG1) ((void) 0)
-  #define DIAG_PRINTLN(ARG1) ((void) 0)
+#define DIAG_PRINT(ARG1) ((void)0)
+#define DIAG_PRINTHEX(ARG1) ((void)0)
+#define DIAG_PRINTLN(ARG1) ((void)0)
 #endif
 
 #ifdef ENABLE_OTA
-  #include <ArduinoOTA.h>
+#include <ArduinoOTA.h>
 #endif
 
 FASTLED_USING_NAMESPACE
 
-#define LED_0_DATA  5
-#define LED_0_CLK   3
-#define LED_1_DATA  8
-#define LED_1_CLK   9
-#define LED_2_DATA  14  /*A0*/
-#define LED_2_CLK   17  /*A3*/
-#define LED_3_DATA  15  /*A1*/
-#define LED_3_CLK   16  /*A2*/
-#define LED_TYPE    APA102
+#define LED_0_DATA 5
+#define LED_0_CLK 3
+#define LED_1_DATA 8
+#define LED_1_CLK 9
+#define LED_2_DATA 14 /*A0*/
+#define LED_2_CLK 17  /*A3*/
+#define LED_3_DATA 15 /*A1*/
+#define LED_3_CLK 16  /*A2*/
+#define LED_TYPE APA102
 #define COLOR_ORDER GRB
 // Initial brightness of the lightstrip.
-#define INIT_BRIGHTNESS  255
+#define INIT_BRIGHTNESS 255
 // Minimum brightness of the lightstrip.
 #define MIN_BRIGHTNESS 63
 // Maximum brightness of the lightstrip.
@@ -63,25 +63,25 @@ FASTLED_USING_NAMESPACE
 #define CALIBRATION_DURATION 20000
 
 // Used for sendOSCStream().
-enum osc_cmds {
+enum osc_cmds
+{
   x,
   y,
   xy,
   bump
 };
 
-const uint8_t runningAverageCount = 10;
-float runningAverageBufferX[runningAverageCount];
-float runningAverageBufferY[runningAverageCount];
-uint16_t nextRunningAverage = 0;
-uint16_t previousAverage = 0;
-uint16_t currentAverage = 0;
+float rollingAverageBufferX[runningAverageCount];
+float rollingAverageBufferY[runningAverageCount];
+uint8_t bufferIndex = 0;
+float previousBufferAverage = 0;
+float currentBufferAverage = 0;
 uint8_t currentX = 0;
 uint8_t currentY = 0;
 // Index for the LED (when light is changed incrementally)
-int currentIndex = 0;
+int bumpAnimationIndex = numLeds - 1;
 // Index for the LED (when the light pulses)
-int currentRunningIndex = 0;
+int idleAnimationIndex = 0;
 bool isInAnimation = false;
 uint8_t brightness = INIT_BRIGHTNESS;
 // Fade up or down (1 or -1);
@@ -94,14 +94,14 @@ float maxAcclX = dMaxAcclX;
 float minAcclY = dMinAcclY;
 float maxAcclY = dMaxAcclY;
 // If the pod is in calibration mode
-bool isInCalibration = false;
+// bool isInCalibration = false;
 
 CRGBArray<numLeds> leds;
-//CRGBPalette16 currentPalette;
-// Two halves of the led strip
+// CRGBPalette16 currentPalette;
+//  Two halves of the led strip
 CRGBSet leds0(leds(0, numLeds / 2 - 1));
 CRGBSet leds1(leds(numLeds / 2, numLeds - 1));
-TBlendType    currentBlending;
+TBlendType currentBlending;
 // CHSV startCRGB, endCRGB;
 uint8_t hue = 0;
 uint8_t sat = 0;
@@ -113,6 +113,12 @@ uint8_t val0 = 191;
 uint8_t hue1 = 127;
 uint8_t sat1 = 255;
 uint8_t val1 = 127;
+uint8_t minHue = 0;
+uint8_t maxHue = 255;
+uint8_t minSat = 0;
+uint8_t maxSat = 255;
+uint8_t minVal = 0;
+uint8_t maxVal = 255;
 
 // The identification number of the board
 uint8_t boardIndex = 127;
@@ -120,23 +126,24 @@ uint8_t boardIndex = 127;
 Adafruit_MPU6050 mpu;
 EthernetUDP Udp;
 
-void setup() {
+void setup()
+{
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(LED_0_DATA,OUTPUT);
-  pinMode(LED_0_CLK,OUTPUT);
-  pinMode(LED_1_DATA,OUTPUT);
-  pinMode(LED_1_CLK,OUTPUT);
-  pinMode(LED_2_DATA,OUTPUT);
-  pinMode(LED_2_CLK,OUTPUT);
-  pinMode(LED_3_DATA,OUTPUT);
-  pinMode(LED_3_CLK,OUTPUT);
+  pinMode(LED_0_DATA, OUTPUT);
+  pinMode(LED_0_CLK, OUTPUT);
+  pinMode(LED_1_DATA, OUTPUT);
+  pinMode(LED_1_CLK, OUTPUT);
+  pinMode(LED_2_DATA, OUTPUT);
+  pinMode(LED_2_CLK, OUTPUT);
+  pinMode(LED_3_DATA, OUTPUT);
+  pinMode(LED_3_CLK, OUTPUT);
 
-  FastLED.addLeds<LED_TYPE,LED_0_DATA,LED_0_CLK,COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_1_DATA,LED_1_CLK,COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_2_DATA,LED_2_CLK,COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE,LED_3_DATA,LED_3_CLK,COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
-//  FastLED.setBrightness(BRIGHTNESS);
-//  currentPalette = RainbowColors_p;
+  FastLED.addLeds<LED_TYPE, LED_0_DATA, LED_0_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_1_DATA, LED_1_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_2_DATA, LED_2_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_3_DATA, LED_3_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  //  FastLED.setBrightness(BRIGHTNESS);
+  //  currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
   FastLED.clear();
   FastLED.show();
@@ -147,19 +154,23 @@ void setup() {
   // Use a hardcoded time to wait until Serial is up.
   // Otherwise, the code can hang
   delay(SERIAL_INIT_DELAY);
-//  Serial.flush();
+  //  Serial.flush();
   DIAG_PRINTLN("Serial connection established.");
 
   // Detect arduino board ID
   UniqueID8dump(Serial);
-  // Compare the serial number of the board against known serials. 
+  // Compare the serial number of the board against known serials.
   // This will be used to set up boardIndex (for OSC) as well as the IP and MAC addresses.
-  for (int i = 0; i < numBoards; i++) {
+  for (int i = 0; i < numBoards; i++)
+  {
     bool matched = true;
-    for (size_t j = 0; j < 3; j++) {
-      if (UniqueID8[j + 5] != uniqId[i][j]) matched = false;
+    for (size_t j = 0; j < 3; j++)
+    {
+      if (UniqueID8[j + 5] != uniqId[i][j])
+        matched = false;
     }
-    if (matched) {
+    if (matched)
+    {
       boardIndex = i;
       DIAG_PRINT("Board matched at index ");
       DIAG_PRINTLN(boardIndex);
@@ -167,14 +178,17 @@ void setup() {
     }
   }
   // If boardIndex remains the same, it means that the board is not one of the known boards.
-  if (boardIndex == 127) {
+  if (boardIndex == 127)
+  {
     DIAG_PRINTLN("ERROR - Unknown board.");
     blinkWarningLED();
   }
 
-  if (!mpu.begin()) {
+  if (!mpu.begin())
+  {
     DIAG_PRINTLN("Waiting for accelerometer.");
-    while (true) delay(10);
+    while (true)
+      delay(10);
   }
   DIAG_PRINTLN("Accelerometer is online.");
 
@@ -184,15 +198,16 @@ void setup() {
   mpu.setAccelerometerRange(MPU6050_RANGE_4_G);
 
   DIAG_PRINT("Corresponding MAC address is ");
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 6; i++)
+  {
     DIAG_PRINTHEX(macAddr[boardIndex][i]);
     DIAG_PRINT(" ");
   }
   DIAG_PRINTLN();
-  Ethernet.begin((uint8_t*) macAddr[boardIndex], ipAddr[boardIndex]);
+  Ethernet.begin((uint8_t *)macAddr[boardIndex], ipAddr[boardIndex]);
   DIAG_PRINT("Corresponding IP address is ");
   DIAG_PRINTLN(Ethernet.localIP());
-  
+
   // Udp.begin(outPort);
   if (Udp.begin(outPort))
   {
@@ -204,12 +219,13 @@ void setup() {
     blinkWarningLED();
   }
 
-  #ifdef ENABLE_OTA
+#ifdef ENABLE_OTA
   ArduinoOTA.begin(Ethernet.localIP(), otaUser, otaPass, InternalStorage);
   DIAG_PRINTLN("Arduino OTA module has been initialised.");
-  #endif
+#endif
 
-  for (int i = 0; i < numLeds; i++) {
+  for (int i = 0; i < numLeds; i++)
+  {
     leds[i] = CRGB(100, 100, 100);
   }
   DIAG_PRINTLN("Lightstrip will now light up for five seconds.");
@@ -218,181 +234,126 @@ void setup() {
   DIAG_PRINTLN("Initial configuration is now complete.");
 }
 
-void loop() {
-  #ifdef ENABLE_OTA
+void loop()
+{
+#ifdef ENABLE_OTA
   ArduinoOTA.poll();
-  #endif
+#endif
   OSCBundle msgIn;
   int msgSize;
-  if ((msgSize = Udp.parsePacket()) > 0) {
-    while (msgSize--) {
+  if ((msgSize = Udp.parsePacket()) > 0)
+  {
+    while (msgSize--)
+    {
       msgIn.fill(Udp.read());
-      if (!msgIn.hasError()) msgIn.route(oscRouteName, parseOSCMessage);
+      if (!msgIn.hasError())
+        msgIn.route(oscRouteName, parseOSCMessage);
     }
   }
-  
+
   sensors_event_t accl, gyro, temp;
   mpu.getEvent(&accl, &gyro, &temp);
-  DIAG_PRINT("Acceleration X: ");
-  DIAG_PRINT(accl.acceleration.x);
-  DIAG_PRINT(", Y: ");
-  DIAG_PRINT(accl.acceleration.y);
-  DIAG_PRINT(", Z: ");
-  DIAG_PRINT(accl.acceleration.z);
-  DIAG_PRINTLN(" m/s^2");
 
-  int rawAcclX = accl.acceleration.x * 100;
-  int rawAcclY = accl.acceleration.y * 100;
+  float rawAcclX = accl.acceleration.x;
+  float rawAcclY = accl.acceleration.y;
 
-  sendRawAcclOSC(x, accl.acceleration.x);
-  sendRawAcclOSC(y, accl.acceleration.y);
-//  DIAG_PRINT("rawAcclX: ");
-//  DIAG_PRINT(rawAcclX);
-//  DIAG_PRINT(" rawAcclY: ");
-//  DIAG_PRINTLN(rawAcclY);
-//  sendOSCStream(xy, currentAverage);
-//    sendOSCStream(x, rawAcclX);
-//    sendOSCStream(y, rawAcclY);
+  // Send raw accelerometer data over OSC
+  sendRawAcclOSC(x, rawAcclX);
+  sendRawAcclOSC(y, rawAcclY);
 
-  runningAverageBufferX[nextRunningAverage++] = rawAcclX;
-  runningAverageBufferY[nextRunningAverage] = rawAcclY;
-  if (runningAverageCount <= nextRunningAverage) {
-    nextRunningAverage = 0;
-  }
-  int runningAverageAcclX = 0;
-  int runningAverageAcclY = 0;
+  // Use a buffer to calculate rolling average for accelerometer readouts
+  rollingAverageBufferX[bufferIndex] = rawAcclX;
+  rollingAverageBufferY[bufferIndex++] = rawAcclY;
+  if (runningAverageCount <= bufferIndex)
+    bufferIndex = 0;
+  float rollingAverageAcclX = 0;
+  float rollingAverageAcclY = 0;
   for (int i = 0; i < runningAverageCount; ++i)
   {
-    runningAverageAcclX += runningAverageBufferX[i];
-    runningAverageAcclY += runningAverageBufferY[i];
+    rollingAverageAcclX += rollingAverageBufferX[i];
+    rollingAverageAcclY += rollingAverageBufferY[i];
   }
-  runningAverageAcclX /= runningAverageCount;
-  runningAverageAcclY /= runningAverageCount;
-//  DIAG_PRINT(" runningAverageAcclX: ");
-//  DIAG_PRINT(runningAverageAcclX);
-//  DIAG_PRINT(" runningAverageAcclY: ");
-//  DIAG_PRINTLN(runningAverageAcclY);
+  rollingAverageAcclX /= (float)runningAverageCount;
+  rollingAverageAcclY /= (float)runningAverageCount;
 
-  uint8_t scaledX = map(runningAverageAcclX, -1100, 1100, 0, 255);
-  uint8_t scaledY = map(runningAverageAcclY, -1100, 1100, 0, 255);
-  uint8_t diffX = abs(scaledX - 127);
-  uint8_t diffY = abs(scaledY - 127);
-  uint8_t rgbX = map(diffX, 0, 20, 40, 255);
-  uint8_t rgbY = map(diffY, 0, 20, 40, 255);
+  float diffX = abs(rollingAverageAcclX / (maxAcclX - minAcclX) * 255 - 127);
+  float diffY = abs(rollingAverageAcclY / (maxAcclY - minAcclY) * 255 - 127);
+  float rgbX = map((int)diffX, 0, 20, 40, 255);
+  float rgbY = map((int)diffY, 0, 20, 40, 255);
 
-//TODO
-// DIAG_PRINT(">>>> diffX: ");
-// DIAG_PRINT(diffX);
-// DIAG_PRINT(" diffY: ");
-// DIAG_PRINTLN(diffY);
-
-  currentAverage = (rgbX + rgbY) / 2;
+  currentBufferAverage = (rgbX + rgbY) / 2;
   currentX = rgbX;
   currentY = rgbY;
 
-  //TODO
-//  DIAG_PRINT(" currentAverage: ");
-//  DIAG_PRINT(currentAverage);
-//  DIAG_PRINT(" previousAverage: ");
-//  DIAG_PRINTLN(previousAverage);
-//  DIAG_PRINT(" currentX: ");
-//  DIAG_PRINT(currentX);
-//  DIAG_PRINT(" currentY: ");
-//  DIAG_PRINTLN(currentY);
+  // TODO
+  //  DIAG_PRINT(" currentBufferAverage: ");
+  //  DIAG_PRINT(currentBufferAverage);
+  //  DIAG_PRINT(" previousBufferAverage: ");
+  //  DIAG_PRINTLN(previousBufferAverage);
+  //  DIAG_PRINT(" currentX: ");
+  //  DIAG_PRINT(currentX);
+  //  DIAG_PRINT(" currentY: ");
+  //  DIAG_PRINTLN(currentY);
 
-//  static uint8_t hue;
-  brightness = beatsin8(20,240,255) - (diffX + diffY) / 4;
+  brightness = beatsin8(20, 240, 255) - (diffX + diffY) / 4;
   hue = map(brightness, 100, 255, hue0, hue1) + (diffX + diffY) / 8;
   sat = map(brightness, 100, 255, sat0, sat1) - (diffX + diffY) / 6;
-  // EVERY_N_MILLISECONDS (20) {
-  if (!isInAnimation) {
-    // for (int i = 0; i < numLeds / 2; i++) {
-      if (currentRunningIndex >= numLeds) currentRunningIndex = 0;
-      leds0[currentRunningIndex] = CHSV(hue, sat, brightness);
-      leds1[numLeds / 2 - 1 - currentRunningIndex] = CHSV(hue, sat, brightness);
-  
-      leds0[currentRunningIndex].r = dim8_video(leds0[currentRunningIndex].r);
-      leds0[currentRunningIndex].g = dim8_video(leds0[currentRunningIndex].g);
-      leds0[currentRunningIndex].b = dim8_video(leds0[currentRunningIndex].b);
-      leds1[numLeds / 2 - 1 - currentRunningIndex].r = dim8_video(leds1[numLeds / 2 - 1 - currentRunningIndex].r);
-      leds1[numLeds / 2 - 1 - currentRunningIndex].g = dim8_video(leds1[numLeds / 2 - 1 - currentRunningIndex].g);
-      leds1[numLeds / 2 - 1 - currentRunningIndex].b = dim8_video(leds1[numLeds / 2 - 1 - currentRunningIndex++].b);
-      //TODO
-//      sendOSCStream(xy, currentAverage);
-//      sendOSCStream(x, currentX);
-//      sendOSCStream(y, currentY);
-    // }
-//    DIAG_PRINT("= hue ");
-//    DIAG_PRINT(hue);
-//    DIAG_PRINT(" sat ");
-//    DIAG_PRINT(sat);
-//    DIAG_PRINT(" brightness ");
-//    DIAG_PRINTLN(brightness);
+  val = brightness;
+
+  // Idle animation
+  if (!isInAnimation)
+  {
+    if (idleAnimationIndex >= numLeds)
+      idleAnimationIndex = 0;
+    leds[idleAnimationIndex] = CHSV(hue, sat, val);
+    leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
+    leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
+    leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex++].b);
+    sendOSCStream(xy, currentBufferAverage);
+    sendOSCStream(x, currentX);
+    sendOSCStream(y, currentY);
     FastLED.show();
-//    sendOSCStream(xy, currentAverage);
-//    sendOSCStream(x, currentX);
-//    sendOSCStream(y, currentY);
   }
-//  DIAG_PRINT(" currentIndex: ");
-//  DIAG_PRINTLN(currentIndex);
-//  DIAG_PRINT("! hue ");
-//  DIAG_PRINT(hue);
-//  DIAG_PRINT(" sat ");
-//  DIAG_PRINT(sat);
-//  DIAG_PRINT(" brightness ");
-//  DIAG_PRINTLN(brightness);
-  // To make sure that currentIndex wraps back to 0 when the last LED has been lit
-  if (currentIndex >= numLeds) {
+  // To make sure that bumpAnimationIndex wraps back to (numLeds - 1) when the last LED has been lit
+  if (bumpAnimationIndex < 0)
+  {
     isInAnimation = false;
-    currentIndex = 0;
-    // TODO
-//    sendOSCStream(xy, currentAverage);
-//    sendOSCStream(x, currentX);
-//    sendOSCStream(y, currentY);
-  } else {
-    if (abs(currentAverage - previousAverage) > BUMP_THRESHOLD) {
-      if (isInAnimation) currentIndex = 0;
+    bumpAnimationIndex = numLeds - 1;
+    sendOSCStream(xy, currentBufferAverage);
+    sendOSCStream(x, currentX);
+    sendOSCStream(y, currentY);
+  }
+  else
+  {
+    if (abs(currentBufferAverage - previousBufferAverage) > BUMP_THRESHOLD)
+    {
+      if (isInAnimation)
+        bumpAnimationIndex = numLeds - 1;
       isInAnimation = true;
       sendOSCStream(bump, 0);
     }
   }
-  if (isInAnimation) {
-    for (int i = 0; i < LIGHTS_PER_CYCLE; i++) {
-      if (++currentIndex < numLeds) leds[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
+  if (isInAnimation)
+  {
+    for (int i = 0; i < LIGHTS_PER_CYCLE; i++)
+    {
+      if (--bumpAnimationIndex < 0)
+        bumpAnimationIndex = numLeds - 1;
 
-//      DIAG_PRINT(">>>> currentIndex: ");
-//      DIAG_PRINTLN(currentIndex);
-      leds[currentIndex - 1].r = dim8_video(leds[currentIndex - 1].r);
-      leds[currentIndex - 1].g = dim8_video(leds[currentIndex - 1].g);
-      leds[currentIndex - 1].b = dim8_video(leds[currentIndex - 1].b);
-      // TODO
-//      sendOSCStream(xy, currentAverage);
-//      sendOSCStream(x, currentX);
-//      sendOSCStream(y, currentY);
+      leds[bumpAnimationIndex] = CRGB(rgbX, 0, rgbY);
+      //      DIAG_PRINT(">>>> bumpAnimationIndex: ");
+      //      DIAG_PRINTLN(bumpAnimationIndex);
+      leds[bumpAnimationIndex - 1].r = dim8_video(leds[bumpAnimationIndex - 1].r);
+      leds[bumpAnimationIndex - 1].g = dim8_video(leds[bumpAnimationIndex - 1].g);
+      leds[bumpAnimationIndex - 1].b = dim8_video(leds[bumpAnimationIndex - 1].b);
+      sendOSCStream(xy, currentBufferAverage);
+      sendOSCStream(x, currentX);
+      sendOSCStream(y, currentY);
       FastLED.show();
     }
   }
-//    if (currentIndex < numLeds / 2) {
-//      leds0[currentIndex - 1] = CRGB(rgbX, 0, rgbY);
-//      leds1[numLeds / 2 - 1 - currentIndex - 1] = CRGB(rgbX, 0, rgbY);
-//      leds0[currentIndex - 1].r = dim8_video(leds0[currentIndex - 1].r);
-//      leds0[currentIndex - 1].g = dim8_video(leds0[currentIndex - 1].g);
-//      leds0[currentIndex - 1].b = dim8_video(leds0[currentIndex - 1].b);
-//      leds1[numLeds / 2 - 1 - currentIndex - 1].r = dim8_video(leds1[numLeds / 2 - 1 - currentIndex - 1].r);
-//      leds1[numLeds / 2 - 1 - currentIndex - 1].g = dim8_video(leds1[numLeds / 2 - 1 - currentIndex - 1].g);
-//      leds1[numLeds / 2 - 1 - currentIndex - 1].b = dim8_video(leds1[numLeds / 2 - 1 - currentIndex - 1].b);
-//    } else {
-//      leds0[currentIndex - numLeds / 2] = CHSV(hue, sat, brightness);
-//      leds1[numLeds - 1 - currentIndex] = CHSV(hue, sat, brightness);
-//      leds0[currentIndex - numLeds / 2].r = dim8_video(leds0[currentIndex - numLeds / 2].r);
-//      leds0[currentIndex - numLeds / 2].g = dim8_video(leds0[currentIndex - numLeds / 2].g);
-//      leds0[currentIndex - numLeds / 2].b = dim8_video(leds0[currentIndex - numLeds / 2].b);
-//      leds1[numLeds - 1 - currentIndex].r = dim8_video(leds1[numLeds - 1 - currentIndex].r);
-//      leds1[numLeds - 1 - currentIndex].g = dim8_video(leds1[numLeds - 1 - currentIndex].g);
-//      leds1[numLeds - 1 - currentIndex].b = dim8_video(leds1[numLeds - 1 - currentIndex].b);
-//    }
-  
-  previousAverage = currentAverage;
+
+  previousBufferAverage = currentBufferAverage;
 }
 
 /*
@@ -401,33 +362,35 @@ void loop() {
  * currentVal: (uint8_t) Value to be passed in OSC message.
  * EXAMPLE: sendOSCStream(bump, 10);
  */
-void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
+void sendOSCStream(osc_cmds cmd, uint8_t currentVal)
+{
   char boardIdent[12];
-  switch(cmd) {
-    case(x):
-      sprintf(boardIdent, "%s/x", oscRouteName);
-      break;
-    case(y):
-      sprintf(boardIdent, "%s/y", oscRouteName);
-      break;
-    case(xy):
-      sprintf(boardIdent, "%s/xy", oscRouteName);
-      break;
-    case(bump):
-      sprintf(boardIdent, "%s/xy", oscRouteName);
-      break;
+  switch (cmd)
+  {
+  case (x):
+    sprintf(boardIdent, "%s/x", oscRouteName);
+    break;
+  case (y):
+    sprintf(boardIdent, "%s/y", oscRouteName);
+    break;
+  case (xy):
+    sprintf(boardIdent, "%s/xy", oscRouteName);
+    break;
+  case (bump):
+    sprintf(boardIdent, "%s/xy", oscRouteName);
+    break;
   }
   DIAG_PRINT(boardIdent);
   DIAG_PRINT(" ");
   DIAG_PRINTLN(currentVal);
-  
+
   OSCMessage msg(boardIdent);
   (cmd == bump) ? msg.add("bang") : msg.add(currentVal);
   Udp.beginPacket(outAddr, outPort);
-//  DIAG_PRINT("!!! UDP rmt "); 
-//  DIAG_PRINT(Udp.remoteIP());
-//  DIAG_PRINT(" port ");
-//  DIAG_PRINTLN(Udp.remotePort());
+  //  DIAG_PRINT("!!! UDP rmt ");
+  //  DIAG_PRINT(Udp.remoteIP());
+  //  DIAG_PRINT(" port ");
+  //  DIAG_PRINTLN(Udp.remotePort());
   msg.send(Udp);
   Udp.endPacket();
   msg.empty();
@@ -439,15 +402,17 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
  * currentVal: (float) Value to be passed in OSC message.
  * EXAMPLE: sendRawAcclOSC(x, 0.01);
  */
-void sendRawAcclOSC(osc_cmds cmd, float currentVal) {
+void sendRawAcclOSC(osc_cmds cmd, float currentVal)
+{
   char boardIdent[12];
-  switch(cmd) {
-    case(x):
-      sprintf(boardIdent, "%s/acclx", oscRouteName);
-      break;
-    case(y):
-      sprintf(boardIdent, "%s/accly", oscRouteName);
-      break;
+  switch (cmd)
+  {
+  case (x):
+    sprintf(boardIdent, "%s/acclx", oscRouteName);
+    break;
+  case (y):
+    sprintf(boardIdent, "%s/accly", oscRouteName);
+    break;
   }
   OSCMessage msg(boardIdent);
   msg.add(currentVal);
@@ -460,10 +425,12 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal) {
 /*
  * Function to parse OSC message that is sent to Arduino
  */
-void parseOSCMessage(OSCMessage &msg, int offset) 
+void parseOSCMessage(OSCMessage &msg, int offset)
 {
-  if (msg.fullMatch("/reboot", offset)) {
-    for (int i = 0; i < 3; i++) {
+  if (msg.fullMatch("/reboot", offset))
+  {
+    for (int i = 0; i < 3; i++)
+    {
       FastLED.setBrightness(127);
       fill_solid(leds, numLeds, CRGB(0, 255, 0));
       FastLED.show();
@@ -473,7 +440,9 @@ void parseOSCMessage(OSCMessage &msg, int offset)
       delay(500);
     }
     NVIC_SystemReset();
-  } else if (msg.fullMatch("/resetCalibration", offset)) {
+  }
+  else if (msg.fullMatch("/resetCalibration", offset))
+  {
     FastLED.clear();
     FastLED.show();
     minAcclX = dMinAcclX;
@@ -488,8 +457,11 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     Udp.endPacket();
     response.empty();
     delay(500);
-  } else if (msg.fullMatch("/ident", offset)) {
-    for (int i = 0; i < 5; i++) {
+  }
+  else if (msg.fullMatch("/ident", offset))
+  {
+    for (int i = 0; i < 5; i++)
+    {
       FastLED.setBrightness(191);
       fill_solid(leds, numLeds, CRGB(255, 0, 127));
       FastLED.show();
@@ -498,7 +470,9 @@ void parseOSCMessage(OSCMessage &msg, int offset)
       FastLED.show();
       delay(500);
     }
-  } else if (msg.fullMatch("/getAcclRange", offset)) {
+  }
+  else if (msg.fullMatch("/getAcclRange", offset))
+  {
     OSCBundle response;
     char boardIdentMinX[24], boardIdentMaxX[24], boardIdentMinY[24], boardIdentMaxY[24];
     sprintf(boardIdentMinX, "%s/minAcclx", oscRouteName);
@@ -513,18 +487,25 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     response.send(Udp);
     Udp.endPacket();
     response.empty();
-  } else if (msg.fullMatch("/calibrate", offset)) {
+  }
+  else if (msg.fullMatch("/calibrate", offset))
+  {
     FastLED.setBrightness(127);
     fill_solid(leds, numLeds, CRGB(255, 255, 0));
     FastLED.show();
     unsigned long startTime = millis();
-    while (millis() - startTime < CALIBRATION_DURATION) {
+    while (millis() - startTime < CALIBRATION_DURATION)
+    {
       sensors_event_t accl, gyro, temp;
       mpu.getEvent(&accl, &gyro, &temp);
-      if (accl.acceleration.x < minAcclX) minAcclX = accl.acceleration.x;
-      if (accl.acceleration.x > maxAcclX) maxAcclX = accl.acceleration.x;
-      if (accl.acceleration.y < minAcclY) minAcclY = accl.acceleration.y;
-      if (accl.acceleration.y > maxAcclY) maxAcclY = accl.acceleration.y;
+      if (accl.acceleration.x < minAcclX)
+        minAcclX = accl.acceleration.x;
+      if (accl.acceleration.x > maxAcclX)
+        maxAcclX = accl.acceleration.x;
+      if (accl.acceleration.y < minAcclY)
+        minAcclY = accl.acceleration.y;
+      if (accl.acceleration.y > maxAcclY)
+        maxAcclY = accl.acceleration.y;
     }
     FastLED.clear();
     FastLED.show();
@@ -536,9 +517,10 @@ void parseOSCMessage(OSCMessage &msg, int offset)
  */
 
 // Blink the LED identified as L and halt to show the board is not functioning as designed.
-void blinkWarningLED() 
+void blinkWarningLED()
 {
-  while(true) {
+  while (true)
+  {
     digitalWrite(LED_BUILTIN, HIGH);
     delay(500);
     digitalWrite(LED_BUILTIN, LOW);

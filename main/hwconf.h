@@ -90,4 +90,7 @@ static const float dMinAcclX = -6.;
 static const float dMaxAcclX = 6.;
 static const float dMinAcclY = -6.;
 static const float dMaxAcclY = 6.;
+
+// How many accelerometer readout will be averaged
+static const uint8_t runningAverageCount = 10;
 #endif
