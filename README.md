@@ -54,11 +54,13 @@ Ensure the data within [`hwconf.h`](main/hwconf.h) matches the hardware that wil
 
 _This is currently an experimental feature and can be disabled by unset the `ENABLE_OTA` macro._
 
-This can be done on a computer that is directly connected to the switch. Wait until Arduino is fully boot up (when the lightstrip turns all white), and select the correct Arduino board in _Tools > Port_. In addition to normal Serial ports section (if one is connected), there will be a Network ports section. Select the correct board and upload firmware. If you have difficulties identifying the board, you can use the [`/pod[ID]/ident` OSC Message](OSC_MESSAGES.md#r-message-identifying-a-particular-pod).
+This can be done on a computer that is directly connected to the switch. Wait until Arduino is fully boot up (when the lightstrip turns all white), and select the correct Arduino board in _Tools > Port_. In addition to normal Serial ports section (if one is connected), there will be a Network ports section. Select the correct board and upload firmware. If you have difficulties identifying the board, you can use the [`/pod[ID]/ident` OSC Message](OSC_MESSAGES.md#r-ident).
 
 ## Terminologies
 
 'Macro' are those lines with `#define` at the top of [`main.ino`](main/main.ino). 'Constants' are `static const` variables in [`hwconf.h`](main/hwconf.h) header file.
+
+'Soft reboot' is a process where a reboot is initiated from software, or when power temporarily disconnects. 'Hard reboot' is a process where power is lost for an extended amount of time so that the RAM data is no longer retained.
 
 ## Bootup Sequence
 
