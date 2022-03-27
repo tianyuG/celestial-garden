@@ -54,9 +54,11 @@ Ensure the data within [`hwconf.h`](main/hwconf.h) matches the hardware that wil
 
 ### Over-the-Air (OTA) Firmware Update
 
-_This is currently an experimental feature and can be disabled by unset the `ENABLE_OTA` macro._
+_This is currently an experimental feature and can be disabled by unsetting the `ENABLE_OTA` macro._
 
-This can be done on a computer that is directly connected to the switch. Wait until Arduino is fully boot up (when the lightstrip turns all white), and select the correct Arduino board in _Tools > Port_. In addition to normal Serial ports section (if one is connected), there will be a Network ports section. Select the correct board and upload firmware. If you have difficulties identifying the board, you can use the [`/pod[ID]/ident` OSC Message](OSC_MESSAGES.md#r-ident).
+The preferred way to update the firmware is by using USB connection ,but over-the-air firmware update can also be done on a computer that is directly connected to the switch. Wait until Arduino is fully boot up (when the lightstrip turns all white), and select the correct Arduino board in _Tools > Port_. In addition to normal Serial ports section (if one is connected), there will be a Network ports section. Select the correct board and upload firmware. 
+
+If you have difficulties identifying the board, you can use the [`/pod[ID]/ident` OSC Message](OSC_MESSAGES.md#r-ident).
 
 ## Terminologies
 

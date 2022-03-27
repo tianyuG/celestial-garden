@@ -317,8 +317,11 @@ void loop()
   }
   else
   {
+    // If a bump is detected, prep for bump animation
     if (abs(currentBufferAverage - previousBufferAverage) > BUMP_THRESHOLD)
     {
+      // If bumped when bump animation is already in place,
+      // Restart bump animation counter.
       if (isInAnimation)
         bumpAnimationIndex = numLeds - 1;
       isInAnimation = true;
@@ -379,10 +382,6 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal)
   OSCMessage msg(boardIdent);
   (cmd == bump) ? msg.add("bang") : msg.add(currentVal);
   Udp.beginPacket(outAddr, outPort);
-  //  DIAG_PRINT("!!! UDP rmt ");
-  //  DIAG_PRINT(Udp.remoteIP());
-  //  DIAG_PRINT(" port ");
-  //  DIAG_PRINTLN(Udp.remotePort());
   msg.send(Udp);
   Udp.endPacket();
   msg.empty();
@@ -415,7 +414,8 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
 }
 
 /*
- * Function to parse OSC message that is sent to Arduino
+ * Function to parse OSC message that is sent to Arduino.
+ * See `../OSC_MESSAGES.md` for documentation (sections that starts with '(R)').
  */
 void parseOSCMessage(OSCMessage &msg, int offset)
 {
