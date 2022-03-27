@@ -133,7 +133,7 @@ _Handled by `parseOSCMessage()`._
 
 **Receives** by Arduino so it will reset accelerometer range calibration to default values.
 
-The default values of the accelerometer ranges are defined in [hwconf.h](main/hwconf.h) as `dMinAcclX`, `dMaxAcclX`, `dMinAcclY`, `dMaxAcclY`.
+The default values of the accelerometer ranges are defined in [`hwconf.h`](main/hwconf.h) as `dMinAcclX`, `dMaxAcclX`, `dMinAcclY`, `dMaxAcclY`.
 
 ## (S) `resetComplete`
 
