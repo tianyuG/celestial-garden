@@ -84,4 +84,10 @@ static const IPAddress ipAddr[numBoards] = {
 static const IPAddress outAddr(192, 168, 1, 42);
 
 static const unsigned int outPort = 8888;
+
+// Default accelerometer min/max values for x- and y-axis
+static const float dMinAcclX = -6.;
+static const float dMaxAcclX = 6.;
+static const float dMinAcclY = -6.;
+static const float dMaxAcclY = 6.;
 #endif

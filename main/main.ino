@@ -3,6 +3,7 @@
 #include <EthernetUdp.h>
 #include <SPI.h>
 #include <OSCMessage.h>
+#include <OSCBundle.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <FastLED.h>
@@ -36,6 +37,8 @@ FASTLED_USING_NAMESPACE
 #define IN_CYCLE_DELAY 1
 // The threshold for a motion to be determined to be a bump
 #define BUMP_THRESHOLD 20
+// How long should Arduino remain in calibration mode (milliseconds)
+#define CALIBRATION_DURATION 20000
 
 // Comment out the next line if diagnostic output (over serial) is not needed
 // This can save around 1% -- 2% of program storage
@@ -75,6 +78,15 @@ bool isInAnimation = false;
 uint8_t brightness = INIT_BRIGHTNESS;
 // Fade up or down (1 or -1);
 uint8_t fade_direction = 1;
+// Name used by OSC to route message
+char oscRouteName[6];
+// Maximum and minimum values from the accelerometer in x- and y-axis
+float minAcclX = dMinAcclX;
+float maxAcclX = dMaxAcclX;
+float minAcclY = dMinAcclY;
+float maxAcclY = dMaxAcclY;
+// If the pod is in calibration mode
+bool isInCalibration = false;
 
 CRGBArray<numLeds> leds;
 //CRGBPalette16 currentPalette;
@@ -118,6 +130,8 @@ void setup() {
 //  FastLED.setBrightness(BRIGHTNESS);
 //  currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
+  FastLED.clear();
+  FastLED.show();
 
   Serial.begin(115200);
   // Instead of the following code:
@@ -141,6 +155,7 @@ void setup() {
       boardIndex = i;
       DIAG_PRINT("Board matched at index ");
       DIAG_PRINTLN(boardIndex);
+      sprintf(oscRouteName, "/pod0%d", boardIndex + 1);
     }
   }
   // If boardIndex remains the same, it means that the board is not one of the known boards.
@@ -191,15 +206,24 @@ void setup() {
 }
 
 void loop() {
+  OSCBundle msgIn;
+  int msgSize;
+  if ((msgSize = Udp.parsePacket()) > 0) {
+    while (msgSize--) {
+      msgIn.fill(Udp.read());
+      if (!msgIn.hasError()) msgIn.route(oscRouteName, parseOSCMessage);
+    }
+  }
+  
   sensors_event_t accl, gyro, temp;
   mpu.getEvent(&accl, &gyro, &temp);
-   DIAG_PRINT("Acceleration X: ");
-   DIAG_PRINT(accl.acceleration.x);
-   DIAG_PRINT(", Y: ");
-   DIAG_PRINT(accl.acceleration.y);
-   DIAG_PRINT(", Z: ");
-   DIAG_PRINT(accl.acceleration.z);
-   DIAG_PRINTLN(" m/s^2");
+  DIAG_PRINT("Acceleration X: ");
+  DIAG_PRINT(accl.acceleration.x);
+  DIAG_PRINT(", Y: ");
+  DIAG_PRINT(accl.acceleration.y);
+  DIAG_PRINT(", Z: ");
+  DIAG_PRINT(accl.acceleration.z);
+  DIAG_PRINTLN(" m/s^2");
 
   int rawAcclX = accl.acceleration.x * 100;
   int rawAcclY = accl.acceleration.y * 100;
@@ -357,35 +381,30 @@ void loop() {
 
 /*
  * Function to format and send data over OSC.
- * axis: Use osc_x, osc_y, osc_xy or osc_bump (need to cast from `const char*` to `char*`).
- * currentVal: Value to be passed in OSC message.
- * EXAMPLE: sendOSCStream((char*) osc_bump, 10);
+ * cmds: (enum osc_cmds) Use x, y, xy or bump.
+ * currentVal: (uint8_t) Value to be passed in OSC message.
+ * EXAMPLE: sendOSCStream(bump, 10);
  */
 void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
   char boardIdent[12];
-  if (cmd == bump) {
-    sprintf(boardIdent, "/pod0%d/xy", boardIndex + 1);
-    // msg.add(boardIdent).add("bang");
-    DIAG_PRINT(boardIdent);
-    DIAG_PRINTLN(" bang");
-  } else {
-    switch(cmd) {
-      case(x):
-        sprintf(boardIdent, "/pod0%d/x", boardIndex + 1);
-        break;
-      case(y):
-        sprintf(boardIdent, "/pod0%d/y", boardIndex + 1);
-        break;
-      case(xy):
-        sprintf(boardIdent, "/pod0%d/xy", boardIndex + 1);
-        break;
-    }
-
-    // msg.add(boardIdent).add(currentVal);
-    DIAG_PRINT(boardIdent);
-    DIAG_PRINT(" ");
-    DIAG_PRINTLN(currentVal);
+  switch(cmd) {
+    case(x):
+      sprintf(boardIdent, "%s/x", oscRouteName);
+      break;
+    case(y):
+      sprintf(boardIdent, "%s/y", oscRouteName);
+      break;
+    case(xy):
+      sprintf(boardIdent, "%s/xy", oscRouteName);
+      break;
+    case(bump):
+      sprintf(boardIdent, "%s/xy", oscRouteName);
+      break;
   }
+  DIAG_PRINT(boardIdent);
+  DIAG_PRINT(" ");
+  DIAG_PRINTLN(currentVal);
+  
   OSCMessage msg(boardIdent);
   (cmd == bump) ? msg.add("bang") : msg.add(currentVal);
   Udp.beginPacket(outAddr, outPort);
@@ -398,14 +417,20 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal) {
   msg.empty();
 }
 
+/*
+ * Function to send raw accelerometer readout over OSC.
+ * cmd: (enum osc_cmds) Use x or y.
+ * currentVal: (float) Value to be passed in OSC message.
+ * EXAMPLE: sendRawAcclOSC(x, 0.01);
+ */
 void sendRawAcclOSC(osc_cmds cmd, float currentVal) {
   char boardIdent[12];
   switch(cmd) {
     case(x):
-      sprintf(boardIdent, "/pod0%d/acclx", boardIndex + 1);
+      sprintf(boardIdent, "%s/acclx", oscRouteName);
       break;
     case(y):
-      sprintf(boardIdent, "/pod0%d/accly", boardIndex + 1);
+      sprintf(boardIdent, "%s/accly", oscRouteName);
       break;
   }
   OSCMessage msg(boardIdent);
@@ -416,8 +441,87 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal) {
   msg.empty();
 }
 
+/*
+ * Function to parse OSC message that is sent to Arduino
+ */
+void parseOSCMessage(OSCMessage &msg, int offset) 
+{
+  if (msg.fullMatch("/reboot", offset)) {
+    for (int i = 0; i < 3; i++) {
+      FastLED.setBrightness(127);
+      fill_solid(leds, numLeds, CRGB(0, 255, 0));
+      FastLED.show();
+      delay(500);
+      FastLED.clear();
+      FastLED.show();
+      delay(500);
+    }
+    NVIC_SystemReset();
+  } else if (msg.fullMatch("/resetCalibration", offset)) {
+    FastLED.clear();
+    FastLED.show();
+    minAcclX = dMinAcclX;
+    maxAcclX = dMaxAcclX;
+    minAcclY = dMinAcclY;
+    maxAcclY = dMaxAcclY;
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/resetComplete", oscRouteName);
+    OSCMessage response(boardIdent);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
+    delay(500);
+  } else if (msg.fullMatch("/ident", offset)) {
+    for (int i = 0; i < 5; i++) {
+      FastLED.setBrightness(191);
+      fill_solid(leds, numLeds, CRGB(255, 0, 127));
+      FastLED.show();
+      delay(500);
+      FastLED.clear();
+      FastLED.show();
+      delay(500);
+    }
+  } else if (msg.fullMatch("/getAcclRange", offset)) {
+    OSCBundle response;
+    char boardIdentMinX[24], boardIdentMaxX[24], boardIdentMinY[24], boardIdentMaxY[24];
+    sprintf(boardIdentMinX, "%s/minAcclx", oscRouteName);
+    sprintf(boardIdentMaxX, "%s/maxAcclx", oscRouteName);
+    sprintf(boardIdentMinY, "%s/minAccly", oscRouteName);
+    sprintf(boardIdentMaxY, "%s/maxAccly", oscRouteName);
+    response.add(boardIdentMinX).add(minAcclX);
+    response.add(boardIdentMaxX).add(maxAcclX);
+    response.add(boardIdentMinY).add(minAcclY);
+    response.add(boardIdentMaxY).add(maxAcclY);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
+  } else if (msg.fullMatch("/calibrate", offset)) {
+    FastLED.setBrightness(127);
+    fill_solid(leds, numLeds, CRGB(255, 255, 0));
+    FastLED.show();
+    unsigned long startTime = millis();
+    while (millis() - startTime < CALIBRATION_DURATION) {
+      sensors_event_t accl, gyro, temp;
+      mpu.getEvent(&accl, &gyro, &temp);
+      if (accl.acceleration.x < minAcclX) minAcclX = accl.acceleration.x;
+      if (accl.acceleration.x > maxAcclX) maxAcclX = accl.acceleration.x;
+      if (accl.acceleration.y < minAcclY) minAcclY = accl.acceleration.y;
+      if (accl.acceleration.y > maxAcclY) maxAcclY = accl.acceleration.y;
+    }
+    FastLED.clear();
+    FastLED.show();
+    delay(1000);
+  }
+}
+/*
+ * Function to perform calibration
+ */
+
 // Blink the LED identified as L and halt to show the board is not functioning as designed.
-void blinkWarningLED() {
+void blinkWarningLED() 
+{
   while(true) {
     digitalWrite(LED_BUILTIN, HIGH);
     delay(500);
