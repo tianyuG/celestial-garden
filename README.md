@@ -1,8 +1,8 @@
 # celestial-garden
 
-Repo for ACCelerate 2022 exhibit Celestial Garden
+Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://acceleratefestival.com/exhibits/celestial-garden/) ([archived](https://web.archive.org/web/20220327211602/https://acceleratefestival.com/exhibits/celestial-garden/)).
 
-_Main code and documentation (c) 2022 Tianyu Ge, portions of code adapted from works from David Franusich and Matthew Swarts._
+_Main code and documentation (c) 2022 Tianyu Ge, with portions of code adapted from works by David Franusich, Matthew Swarts, and Adrian Freed._
 
 - [celestial-garden](#celestial-garden)
   - [Prerequisites](#prerequisites)
