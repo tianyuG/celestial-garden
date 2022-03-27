@@ -2,6 +2,17 @@
 
 Repo for ACCelerate 2022 exhibit Celestial Garden
 
+- [celestial-garden](#celestial-garden)
+  - [Prerequisites](#prerequisites)
+  - [Usage](#usage)
+    - [Over-the-Air (OTA) Firmware Update](#over-the-air-ota-firmware-update)
+  - [Terminologies](#terminologies)
+  - [Bootup Sequence](#bootup-sequence)
+  - [OSC Messaging Formats](#osc-messaging-formats)
+  - [Important Macros and Files](#important-macros-and-files)
+    - [Macros](#macros)
+    - [Files](#files)
+
 ## Prerequisites
 
 This project requires the following external board libraries.
@@ -38,6 +49,12 @@ This project has been tested with Arduino IDE on Windows 10.
 ## Usage
 
 Ensure the data within [`hwconf.h`](main/hwconf.h) matches the hardware that will be used, ensure all prerequisites have been met, then upload [`main.ino`](main/main.ino) to the Arduino hardware using Arduino IDE.
+
+### Over-the-Air (OTA) Firmware Update
+
+_This is currently an experimental feature and can be disabled by unset the `ENABLE_OTA` macro._
+
+This can be done on a computer that is directly connected to the switch. Wait until Arduino is fully boot up (when the lightstrip turns all white), and select the correct Arduino board in _Tools > Port_. In addition to normal Serial ports section (if one is connected), there will be a Network ports section. Select the correct board and upload firmware. If you have difficulties identifying the board, you can use the [`/pod[ID]/ident` OSC Message](OSC_MESSAGES.md#r-message-identifying-a-particular-pod).
 
 ## Terminologies
 
