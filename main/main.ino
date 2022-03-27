@@ -45,18 +45,10 @@ FASTLED_USING_NAMESPACE
 #define COLOR_ORDER GRB
 // Initial brightness of the lightstrip.
 #define INIT_BRIGHTNESS 255
-// Minimum brightness of the lightstrip.
-#define MIN_BRIGHTNESS 63
-// Maximum brightness of the lightstrip.
-#define MAX_BRIGHTNESS 255
 // How long should the code wait before assuming serial module is initialised (milliseconds)
 #define SERIAL_INIT_DELAY 5000
-// How often should it send OSC message if not bumped (milliseconds)
-#define SEND_OSC_EVERY_SO_OFTEN 100
 // How many LEDs should be turned on per cycle
 #define LIGHTS_PER_CYCLE 3
-// How long should Arduino wait after lighting up each light within a cycle
-#define IN_CYCLE_DELAY 1
 // The threshold for a motion to be determined to be a bump
 #define BUMP_THRESHOLD 20
 // How long should Arduino remain in calibration mode (milliseconds)
