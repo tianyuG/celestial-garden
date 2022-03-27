@@ -2,6 +2,8 @@
 
 Repo for ACCelerate 2022 exhibit Celestial Garden
 
+_Main code and documentation (c) 2022 Tianyu Ge, portions of code adapted from works from David Franusich and Matthew Swarts._
+
 - [celestial-garden](#celestial-garden)
   - [Prerequisites](#prerequisites)
   - [Usage](#usage)
@@ -93,10 +95,10 @@ See [OSC_MESSAGES.md](OSC_MESSAGES.md).
 ### Macros
 
 - `DISPLAY_DIAG`: (Set by default) Unset this macro to disable diagnostic information over serial connection.
-- `ENABLE_OTA`: (Set by default) Unser this macro to disable over-the-air firmware updates.
+- `ENABLE_OTA`: (Set by default) Unset this macro to disable over-the-air firmware updates.
 
 ### Files
 
 - `main/main.ino`: Main Arduino file, firmware so to speak.
-- `main/hwconf.h`: Header file for automatically configuring Arduino to set its MAC and IP address (as in hardware configuration).
-- `main/otacred.h`: Header file for storing the credential for over-the-air firmware updates (as in over-the-air credential). **This file is currently in the repo as it is private. It will be removed if the repository goes public.**
+- `main/hwconf.h`: Header file for automatically configuring Arduino to set its MAC and IP address (as in hardware configuration) as well as server IP address and port. It also has some constants relating to accelerometer settings.
+- `main/otacred.h`: Header file for storing the credential for over-the-air firmware updates (as in over-the-air credential). **This file is currently in the repo as the repository is private. It will be removed if the repository goes public.**

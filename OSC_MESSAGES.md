@@ -1,4 +1,5 @@
 # General format of OSC messages
+
 - [General format of OSC messages](#general-format-of-osc-messages)
   - [General rules](#general-rules)
   - [/S/ `x` or `y` [Data]](#s-x-or-y-data)
