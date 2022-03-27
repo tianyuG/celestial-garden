@@ -1,5 +1,17 @@
 # General format of OSC messages
-
+- [General format of OSC messages](#general-format-of-osc-messages)
+  - [General rules](#general-rules)
+  - [/S/ Messages with X- or Y-axis accelerometer data](#s-messages-with-x--or-y-axis-accelerometer-data)
+  - [/S/ Messages with current average of the colour value controlled by the X- and Y-axis motion](#s-messages-with-current-average-of-the-colour-value-controlled-by-the-x--and-y-axis-motion)
+  - [/S/ Messages notifying that a bump is detected](#s-messages-notifying-that-a-bump-is-detected)
+  - [/S/ Messages sending raw accelerometer readouts](#s-messages-sending-raw-accelerometer-readouts)
+  - [/R/ Message indicating that Arduino should send the minimum and maximum values of accelerometer setup on x- and y-axis](#r-message-indicating-that-arduino-should-send-the-minimum-and-maximum-values-of-accelerometer-setup-on-x--and-y-axis)
+  - [/S/ Message sending minimum and maximum values of accelerometer setup on x- and y-axis](#s-message-sending-minimum-and-maximum-values-of-accelerometer-setup-on-x--and-y-axis)
+  - [/R/ Message indicating that Arduino should perform a calibration](#r-message-indicating-that-arduino-should-perform-a-calibration)
+  - [/S/ Message indicating calibration has been reset to default value](#s-message-indicating-calibration-has-been-reset-to-default-value)
+  - [/R/ Message indicating that Arduino should soft reset](#r-message-indicating-that-arduino-should-soft-reset)
+  - [/R/ Message identifying a particular pod](#r-message-identifying-a-particular-pod)
+  
 ## General rules
 
 - Space between parts of the messages should be interpreted as two parts of the messages, as opposed to one single message. Form the first part of the message and use `add()` of the `OSCMessage` class to add the additional parts of the message. This is needed for the Max patch to parse the message correctly.
