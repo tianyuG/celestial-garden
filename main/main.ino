@@ -8,6 +8,28 @@
 #include <Adafruit_Sensor.h>
 #include <FastLED.h>
 #include "hwconf.h"
+#include "otacred.h"
+
+// Comment out the next line if diagnostic output (over serial) is not needed.
+// This can save around 1% -- 2% of program storage.
+#define DISPLAY_DIAG 1
+
+// Comment out the next line if over-the-air update is not desirable
+#define ENABLE_OTA 1
+
+#ifdef DISPLAY_DIAG
+  #define DIAG_PRINT(ARG1) Serial.print(ARG1)
+  #define DIAG_PRINTHEX(ARG1) Serial.print(ARG1, HEX)
+  #define DIAG_PRINTLN(ARG1) Serial.println(ARG1)
+#else
+  #define DIAG_PRINT(ARG1) ((void) 0)
+  #define DIAG_PRINTHEX(ARG1) ((void) 0)
+  #define DIAG_PRINTLN(ARG1) ((void) 0)
+#endif
+
+#ifdef ENABLE_OTA
+  #include <ArduinoOTA.h>
+#endif
 
 FASTLED_USING_NAMESPACE
 
@@ -39,20 +61,6 @@ FASTLED_USING_NAMESPACE
 #define BUMP_THRESHOLD 20
 // How long should Arduino remain in calibration mode (milliseconds)
 #define CALIBRATION_DURATION 20000
-
-// Comment out the next line if diagnostic output (over serial) is not needed
-// This can save around 1% -- 2% of program storage
-#define DISPLAY_DIAG 1
-
-#ifdef DISPLAY_DIAG
-  #define DIAG_PRINT(ARG1) Serial.print(ARG1)
-  #define DIAG_PRINTHEX(ARG1) Serial.print(ARG1, HEX)
-  #define DIAG_PRINTLN(ARG1) Serial.println(ARG1)
-#else
-  #define DIAG_PRINT(ARG1) ((void) 0)
-  #define DIAG_PRINTHEX(ARG1) ((void) 0)
-  #define DIAG_PRINTLN(ARG1) ((void) 0)
-#endif
 
 // Used for sendOSCStream().
 enum osc_cmds {
@@ -196,6 +204,11 @@ void setup() {
     blinkWarningLED();
   }
 
+  #ifdef ENABLE_OTA
+  ArduinoOTA.begin(Ethernet.localIP(), otaUser, otaPass, InternalStorage);
+  DIAG_PRINTLN("Arduino OTA module has been initialised.");
+  #endif
+
   for (int i = 0; i < numLeds; i++) {
     leds[i] = CRGB(100, 100, 100);
   }
@@ -206,6 +219,9 @@ void setup() {
 }
 
 void loop() {
+  #ifdef ENABLE_OTA
+  ArduinoOTA.poll();
+  #endif
   OSCBundle msgIn;
   int msgSize;
   if ((msgSize = Udp.parsePacket()) > 0) {

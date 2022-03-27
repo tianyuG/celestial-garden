@@ -5,7 +5,7 @@
  * hwconf.h - Header file for the Celestial Garden hardware configurations.
  * This file is used by the main Arduino patch  (with the help from ArduinoUniqueID library)
  * to automatically recognise the serial number of the board and assign MAC address and IP address
- * accordingly. This will allow all light bouys be controlled by one single patch
+ * accordingly. This will allow all light pods be controlled by one single patch
  * as opposed to sixteen discrete patches.
  */
 
