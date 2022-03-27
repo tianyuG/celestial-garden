@@ -134,8 +134,6 @@ void setup()
   FastLED.addLeds<LED_TYPE, LED_1_DATA, LED_1_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_2_DATA, LED_2_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_3_DATA, LED_3_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
-  //  FastLED.setBrightness(BRIGHTNESS);
-  //  currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
   FastLED.clear();
   FastLED.show();
@@ -146,7 +144,6 @@ void setup()
   // Use a hardcoded time to wait until Serial is up.
   // Otherwise, the code can hang
   delay(SERIAL_INIT_DELAY);
-  //  Serial.flush();
   DIAG_PRINTLN("Serial connection established.");
 
   // Detect arduino board ID
@@ -276,16 +273,6 @@ void loop()
   currentBufferAverage = (rgbX + rgbY) / 2;
   currentX = rgbX;
   currentY = rgbY;
-
-  // TODO
-  //  DIAG_PRINT(" currentBufferAverage: ");
-  //  DIAG_PRINT(currentBufferAverage);
-  //  DIAG_PRINT(" previousBufferAverage: ");
-  //  DIAG_PRINTLN(previousBufferAverage);
-  //  DIAG_PRINT(" currentX: ");
-  //  DIAG_PRINT(currentX);
-  //  DIAG_PRINT(" currentY: ");
-  //  DIAG_PRINTLN(currentY);
 
   brightness = beatsin8(20, 240, 255) - (diffX + diffY) / 4;
   hue = map(brightness, 100, 255, hue0, hue1) + (diffX + diffY) / 8;
@@ -435,13 +422,14 @@ void parseOSCMessage(OSCMessage &msg, int offset)
   }
   else if (msg.fullMatch("/resetCalibration", offset))
   {
+    char boardIdent[24];
     FastLED.clear();
     FastLED.show();
     minAcclX = dMinAcclX;
     maxAcclX = dMaxAcclX;
     minAcclY = dMinAcclY;
     maxAcclY = dMaxAcclY;
-    char boardIdent[24];
+    
     sprintf(boardIdent, "%s/resetComplete", oscRouteName);
     OSCMessage response(boardIdent);
     Udp.beginPacket(outAddr, outPort);
@@ -482,10 +470,11 @@ void parseOSCMessage(OSCMessage &msg, int offset)
   }
   else if (msg.fullMatch("/calibrate", offset))
   {
+    unsigned long startTime = millis();
     FastLED.setBrightness(127);
     fill_solid(leds, numLeds, CRGB(255, 255, 0));
     FastLED.show();
-    unsigned long startTime = millis();
+    
     while (millis() - startTime < CALIBRATION_DURATION)
     {
       sensors_event_t accl, gyro, temp;

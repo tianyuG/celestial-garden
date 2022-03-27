@@ -159,7 +159,7 @@ _Handled by `parseOSCMessage()`._
 
 **WARNING**: `/pod[ID]/reboot` is blocking. This means the pod will not function until the reboot is complete.
 
-**Visual Behaviour**: Visually, the pod will blink on and off in green every 500 milliseconds for three times and the normal [bootup behaviour](README.md#bootup-sequence) applies.
+**Visual Behaviour**: The pod will blink on and off in green every 500 milliseconds for three times and the normal [bootup behaviour](README.md#bootup-sequence) applies.
 
 ## (R) `ident`
 
@@ -173,4 +173,4 @@ _Handled by `parseOSCMessage()`._
 
 **WARNING**: `/pod[ID]/ident` is blocking. This means the pod will not function for five seconds (until the identification process is complete).
 
-**Intended Behaviour**: Visually, the corresponding pod will blink on and off in magenta every 500 milliseconds for five times so that it can be located.
+**Visual Behaviour**: The corresponding pod will blink on and off in magenta every 500 milliseconds for five times so that it can be located.

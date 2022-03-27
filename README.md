@@ -2,7 +2,7 @@
 
 Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://acceleratefestival.com/exhibits/celestial-garden/) ([archived](https://web.archive.org/web/20220327211602/https://acceleratefestival.com/exhibits/celestial-garden/)).
 
-_Main code and documentation (c) 2022 Tianyu Ge, with portions of code adapted from works by David Franusich, Matthew Swarts, and Adrian Freed._
+> _Main code and documentation (c) 2022 Tianyu Ge, with portions of code adapted from works by David Franusich, Matthew Swarts, and Adrian Freed._
 
 - [celestial-garden](#celestial-garden)
   - [Prerequisites](#prerequisites)
@@ -65,6 +65,8 @@ If you have difficulties identifying the board, you can use the [`/pod[ID]/ident
 'Macro' are those lines with `#define` at the top of [`main.ino`](main/main.ino). 'Constants' are `static const` variables in [`hwconf.h`](main/hwconf.h) header file.
 
 'Soft reboot' is a process where a reboot is initiated from software, or when power temporarily disconnects. 'Hard reboot' is a process where power is lost for an extended amount of time so that the RAM data is no longer retained.
+
+Each individual assembled hardware components (Arduino + Ethernet hat + custom designed board + speaker + fabric) is known as a 'pod'.
 
 ## Bootup Sequence
 
