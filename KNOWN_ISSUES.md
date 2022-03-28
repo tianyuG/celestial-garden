@@ -1,6 +1,15 @@
 # Known Issues
 
-## Board Misidentify Itself
+- [Known Issues](#known-issues)
+  - [Won't Fix/Can't Fix](#wont-fixcant-fix)
+    - [Board Misidentifies Itself](#board-misidentifies-itself)
+    - [Board Refuses to Respond to OSC Messages](#board-refuses-to-respond-to-osc-messages)
+  - [Investigating](#investigating)
+    - [Bump animation too short](#bump-animation-too-short)
+
+## Won't Fix/Can't Fix
+
+### Board Misidentifies Itself
 
 `WONTFIX`/`INSUFFICIENTDATA`: Unable to replicate past initial occurrence.
 
@@ -8,7 +17,7 @@
 
 **Interim fix**: Power cycle device (disconnect appropriate Ethernet cable, wait for a few seconds and then reconnect). If necessary, re-upload firmware.
 
-## Board Refuse to Respond to OSC Messages
+### Board Refuses to Respond to OSC Messages
 
 `INSUFFICIENTDATA`: Low priority due to complexity; also can be resolved with simple on-field solution.
 
@@ -17,3 +26,9 @@
 Currently suspecting that the UDP module may not have fully initialised after a soft reboot.
 
 **Interim fix**: Power cycle device (disconnect appropriate Ethernet cable, wait for a few seconds and then reconnect).
+
+## Investigating
+
+### Bump animation too short
+
+Working on a buffer for HSV values to hopefully even out the result a bit.
