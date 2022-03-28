@@ -10,10 +10,9 @@ Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://accelera
     - [Over-the-Air (OTA) Firmware Update](#over-the-air-ota-firmware-update)
   - [Terminologies](#terminologies)
   - [Bootup Sequence](#bootup-sequence)
+  - [Known Issues](#known-issues)
   - [OSC Messaging Formats](#osc-messaging-formats)
-  - [Macros and Files](#macros-and-files)
-    - [Macros](#macros)
-    - [Files](#files)
+  - [Miscellaneous Documentation](#miscellaneous-documentation)
 
 ## Prerequisites
 
@@ -90,33 +89,16 @@ If the correct Arduino patch is uploaded to the board, the LED strip is receivin
 
 If Arduino is connected over USB, it will provide diagnostics over Serial Monitor in Arduino IDE (if `DISPLAY_DIAG` macro is set, which is the case by default).
 
+## Known Issues
+
+See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
 ## OSC Messaging Formats
 
 See [OSC_MESSAGES.md](OSC_MESSAGES.md).
 
-## Macros and Files
+## Miscellaneous Documentation
 
-### Macros
-
-Changing these macros will not affect the visual behaviour.
-
-- `DISPLAY_DIAG`: (Set by default) Unset this macro to disable diagnostic information over serial connection.
-  - `DIAG_PRINT`, `DIAG_PRINTLN` and `DIAG_PRINTHEX` outputs diagnostic information in Serial Monitor if `DISPLAY_DIAG` is set. Otherwise those diagnostic information will be ignored.
-- `ENABLE_OTA`: (Set by default) Unset this macro to disable over-the-air firmware updates.
-- `SERIAL_INIT_DELAY`: How long will Arduino wait before assuming that Serial connection is established. The code will halt if blocking logic (such as `while (!Serial) delay(10);`) is used. (in milliseconds)
-- `CALIBRATION_DURATION`: How long should a [calibration cycle](OSC_MESSAGES.md#r-calibrate) be. (in milliseconds)
-
-Changing these macros will affect the visual behaviour in one way or another.
-
-- `LED_0_DATA`, `LED_0_CLK`, `LED_1_DATA`, `LED_1_CLK`, `LED_2_DATA`, `LED_2_CLK`, `LED_3_DATA`, `LED_3_CLK`: Denotes the pin that controls the lightstrips.
-- `LED_TYPE`: Sets the microcontroller of the lightstrips.
-- `COLOR_ORDER`: Sets the LED sequence for the lightstrips.
-- `INIT_BRIGHTNESS`: Denotes the initial brightness of the lightstrip after bootup is complete. (0-255)
-- `LIGHTS_PER_CYCLE`: How many LEDs will be turned on per `loop()` when bumped.
-- `BUMP_THRESHOLD`: The value differential between average accelerometer readings to be registered as a bump. (less sensitive when increased)
-
-### Files
-
-- `main/main.ino`: Main Arduino file, firmware so to speak.
-- `main/hwconf.h`: Header file for automatically configuring Arduino to set its MAC and IP address (as in hardware configuration) as well as server IP address and port. It also has some constants relating to accelerometer settings.
-- `main/otacred.h`: Header file for storing the credential for over-the-air firmware updates (as in over-the-air credential). **This file is currently in the repo as the repository is private. It will be removed if the repository goes public.**
+- Descriptions on what the macros do: [MACROS_DESC.md](MACROS_DESC.md);
+  
+- Descriptions on what the files do: [FILES_DESC.md](FILES_DESC.md).

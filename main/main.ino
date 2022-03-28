@@ -197,6 +197,8 @@ void setup()
   DIAG_PRINT("Corresponding IP address is ");
   DIAG_PRINTLN(Ethernet.localIP());
 
+  sendLocalAddrOSC();
+
   // Udp.begin(outPort);
   if (Udp.begin(outPort))
   {
@@ -279,18 +281,37 @@ void loop()
   sat = map(brightness, 100, 255, sat0, sat1) - (diffX + diffY) / 6;
   val = brightness;
 
+  DIAG_PRINT(" HUE ");
+  DIAG_PRINT(hue);
+  DIAG_PRINT(" SAT ");
+  DIAG_PRINT(sat);
+  DIAG_PRINT(" VAL ");
+  DIAG_PRINTLN(val);
+
   // Idle animation
   if (!isInAnimation)
   {
-    if (idleAnimationIndex >= numLeds)
-      idleAnimationIndex = 0;
-    leds[idleAnimationIndex] = CHSV(hue, sat, val);
-    leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
-    leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
-    leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex++].b);
-    sendOSCStream(xy, currentBufferAverage);
-    sendOSCStream(x, currentX);
-    sendOSCStream(y, currentY);
+    for (int i = 0; i < numLeds; i++) {
+      leds[i] = CHSV(hue, sat, val);
+      leds[i].r = dim8_video(leds[i].r);
+      leds[i].g = dim8_video(leds[i].g);
+      leds[i].b = dim8_video(leds[i].b);
+      sendOSCStream(xy, currentBufferAverage);
+      sendOSCStream(x, currentX);
+      sendOSCStream(y, currentY);
+    }
+//     if (idleAnimationIndex >= numLeds)
+//       idleAnimationIndex = 0;
+//     for (int i = idleAnimationIndex; (i + LIGHTS_PER_CYCLE < numLeds ? i < i + LIGHTS_PER_CYCLE : i < numLeds) ; i++) {
+//       leds[idleAnimationIndex] = CHSV(hue, sat, val);
+//       leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
+//       leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
+//       leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex].b);
+//       sendOSCStream(xy, currentBufferAverage);
+// //      sendOSCStream(x, currentX);
+// //      sendOSCStream(y, currentY);
+//     }
+//     idleAnimationIndex += LIGHTS_PER_CYCLE;
     FastLED.show();
   }
   // To make sure that bumpAnimationIndex wraps back to (numLeds - 1) when the last LED has been lit
@@ -299,8 +320,8 @@ void loop()
     isInAnimation = false;
     bumpAnimationIndex = numLeds - 1;
     sendOSCStream(xy, currentBufferAverage);
-    sendOSCStream(x, currentX);
-    sendOSCStream(y, currentY);
+//    sendOSCStream(x, currentX);
+//    sendOSCStream(y, currentY);
   }
   else
   {
@@ -329,8 +350,8 @@ void loop()
       leds[bumpAnimationIndex - 1].g = dim8_video(leds[bumpAnimationIndex - 1].g);
       leds[bumpAnimationIndex - 1].b = dim8_video(leds[bumpAnimationIndex - 1].b);
       sendOSCStream(xy, currentBufferAverage);
-      sendOSCStream(x, currentX);
-      sendOSCStream(y, currentY);
+//      sendOSCStream(x, currentX);
+//      sendOSCStream(y, currentY);
       FastLED.show();
     }
   }
@@ -386,14 +407,28 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
   switch (cmd)
   {
   case (x):
-    sprintf(boardIdent, "%s/acclx", oscRouteName);
+    sprintf(boardIdent, "%s/accl_x", oscRouteName);
     break;
   case (y):
-    sprintf(boardIdent, "%s/accly", oscRouteName);
+    sprintf(boardIdent, "%s/accl_y", oscRouteName);
     break;
   }
   OSCMessage msg(boardIdent);
   msg.add(currentVal);
+  Udp.beginPacket(outAddr, outPort);
+  msg.send(Udp);
+  Udp.endPacket();
+  msg.empty();
+}
+
+/*
+ * Function to send local IP address to server over OSC
+ */
+void sendLocalAddrOSC() {
+  char boardIdent[12];
+  sprintf(boardIdent, "%s/my_ip", oscRouteName);
+  OSCMessage msg(boardIdent);
+  msg.add(Ethernet.localIP());
   Udp.beginPacket(outAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
@@ -420,7 +455,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     }
     NVIC_SystemReset();
   }
-  else if (msg.fullMatch("/resetCalibration", offset))
+  else if (msg.fullMatch("/reset_calibration", offset))
   {
     char boardIdent[24];
     FastLED.clear();
@@ -430,7 +465,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     minAcclY = dMinAcclY;
     maxAcclY = dMaxAcclY;
     
-    sprintf(boardIdent, "%s/resetComplete", oscRouteName);
+    sprintf(boardIdent, "%s/reset_complete", oscRouteName);
     OSCMessage response(boardIdent);
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
@@ -440,25 +475,27 @@ void parseOSCMessage(OSCMessage &msg, int offset)
   }
   else if (msg.fullMatch("/ident", offset))
   {
-    for (int i = 0; i < 5; i++)
+    DIAG_PRINTLN("OSC-IDENT received");
+    FastLED.setBrightness(191);
+    for (int i = 0; i < 3; i++)
     {
-      FastLED.setBrightness(191);
       fill_solid(leds, numLeds, CRGB(255, 0, 127));
       FastLED.show();
       delay(500);
       FastLED.clear();
       FastLED.show();
       delay(500);
+      DIAG_PRINTLN("OSC-IDENT looped");
     }
   }
-  else if (msg.fullMatch("/getAcclRange", offset))
+  else if (msg.fullMatch("/get_accl_range", offset))
   {
     OSCBundle response;
     char boardIdentMinX[24], boardIdentMaxX[24], boardIdentMinY[24], boardIdentMaxY[24];
-    sprintf(boardIdentMinX, "%s/minAcclx", oscRouteName);
-    sprintf(boardIdentMaxX, "%s/maxAcclx", oscRouteName);
-    sprintf(boardIdentMinY, "%s/minAccly", oscRouteName);
-    sprintf(boardIdentMaxY, "%s/maxAccly", oscRouteName);
+    sprintf(boardIdentMinX, "%s/min_accl_x", oscRouteName);
+    sprintf(boardIdentMaxX, "%s/max_accl_x", oscRouteName);
+    sprintf(boardIdentMinY, "%s/min_accl_y", oscRouteName);
+    sprintf(boardIdentMaxY, "%s/max_accl_y", oscRouteName);
     response.add(boardIdentMinX).add(minAcclX);
     response.add(boardIdentMaxX).add(maxAcclX);
     response.add(boardIdentMinY).add(minAcclY);
