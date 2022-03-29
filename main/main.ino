@@ -277,8 +277,8 @@ void loop()
   currentY = rgbY;
 
   brightness = beatsin8(20, 240, 255) - (diffX + diffY) / 4;
-  hue = map(brightness, 100, 255, hue0, hue1) + (diffX + diffY) / 8;
-  sat = map(brightness, 100, 255, sat0, sat1) - (diffX + diffY) / 6;
+  hue = map(brightness, 100, 255, hue0, hue1) + (diffX + diffY) / 4;
+  sat = map(brightness, 100, 255, sat0, sat1) - (diffX + diffY) / 4;
   val = brightness;
 
   DIAG_PRINT(" HUE ");
@@ -299,6 +299,7 @@ void loop()
       sendOSCStream(xy, currentBufferAverage);
       sendOSCStream(x, currentX);
       sendOSCStream(y, currentY);
+      sendAnyOSC("idle " + i);
     }
 //     if (idleAnimationIndex >= numLeds)
 //       idleAnimationIndex = 0;
@@ -341,7 +342,10 @@ void loop()
     for (int i = 0; i < LIGHTS_PER_CYCLE; i++)
     {
       if (--bumpAnimationIndex < 0)
+      {
         bumpAnimationIndex = numLeds - 1;
+        isInAnimation = false;
+      }
 
       leds[bumpAnimationIndex] = CRGB(rgbX, 0, rgbY);
       //      DIAG_PRINT(">>>> bumpAnimationIndex: ");
@@ -425,10 +429,24 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
  * Function to send local IP address to server over OSC
  */
 void sendLocalAddrOSC() {
+//  char boardIdent[12];
+//  sprintf(boardIdent, "%s/my_ip", oscRouteName);
+//  OSCMessage msg(boardIdent);
+//  IPAddress myIP = Ethernet.localIP();
+//  char myIPAddr[16];
+//  sprintf(myIPAddr, "%s:%s:%s:%s", String(myIP[0]), String(myIP[1]), String(myIP[2]), String(myIP[3]));
+//  msg.add(myIPAddr);
+//  Udp.beginPacket(outAddr, outPort);
+//  msg.send(Udp);
+//  Udp.endPacket();
+//  msg.empty();
+}
+
+void sendAnyOSC(String msgBody) {
   char boardIdent[12];
-  sprintf(boardIdent, "%s/my_ip", oscRouteName);
+  sprintf(boardIdent, "%s/any", oscRouteName);
   OSCMessage msg(boardIdent);
-  msg.add(Ethernet.localIP());
+  msg.add(msgBody);
   Udp.beginPacket(outAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
@@ -528,6 +546,14 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     FastLED.clear();
     FastLED.show();
     delay(1000);
+  } else if (msg.fullMatch("/ping", offset)) {
+    char boardIdent[12];
+    sprintf("%s/ping", oscRouteName);
+    OSCMessage response(boardIdent);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
   }
 }
 /*

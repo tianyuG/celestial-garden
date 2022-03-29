@@ -15,6 +15,7 @@
   - [(R) `reboot`](#r-reboot)
   - [(R) `ident`](#r-ident)
   - [(S) `my_ip` [Data]](#s-my_ip-data)
+  - [(S, R) `ping`](#s-r-ping)
   
 ## General rules
 
@@ -189,8 +190,14 @@ _Handled by `parseOSCMessage()`._
 /pod[ID]/my_ip [Data]
 ```
 
-_Handled by `sendLocalAddrOSC()`._
+**Currently not implemented.** _Handled by `sendLocalAddrOSC()`._
 
 **Sends** the IP address that is assigned to the Ethernet interface to server. This acts as a safeguard to ensure that the correct IP address has been set, but it can also be timestamped in Max/MSP to act as a notification when the pod comes online.
 
-[Data]: (IPAddress) IP address of the corresponding Arduino board 
+[Data]: (IPAddress) IP address of the corresponding Arduino board.
+
+## (S, R) `ping`
+
+_Handled by `parseOSCMessage()`._
+
+**Receives** ping from server and **sends** a response to ensure the program had not halted. Used for testing purposes.
