@@ -50,7 +50,7 @@ FASTLED_USING_NAMESPACE
 // How many LEDs should be turned on per cycle
 #define LIGHTS_PER_CYCLE 3
 // The threshold for a motion to be determined to be a bump
-#define BUMP_THRESHOLD 20
+#define BUMP_THRESHOLD 10
 // How long should Arduino remain in calibration mode (milliseconds)
 #define CALIBRATION_DURATION 20000
 
@@ -75,7 +75,7 @@ int bumpAnimationIndex = numLeds - 1;
 // Index for the LED (when the light pulses)
 int idleAnimationIndex = 0;
 bool isInAnimation = false;
-uint8_t brightness = INIT_BRIGHTNESS;
+float brightness = INIT_BRIGHTNESS;
 // Fade up or down (1 or -1);
 uint8_t fade_direction = 1;
 // Name used by OSC to route message
@@ -184,7 +184,7 @@ void setup()
   mpu.setFilterBandwidth(MPU6050_BAND_260_HZ);
 
   // Change the range below to make it more or less sensitive
-  mpu.setAccelerometerRange(MPU6050_RANGE_4_G);
+  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
 
   DIAG_PRINT("Corresponding MAC address is ");
   for (int i = 0; i < 6; i++)
@@ -276,7 +276,11 @@ void loop()
   currentX = rgbX;
   currentY = rgbY;
 
-  brightness = beatsin8(20, 240, 255) - (diffX + diffY) / 4;
+  sendOSCStream(xy, currentBufferAverage);
+  sendOSCStream(x, currentX);
+  sendOSCStream(y, currentY);
+
+  brightness = (float)beatsin16(20, 240, 255) / 256. - (diffX + diffY) / 4;
   hue = map(brightness, 100, 255, hue0, hue1) + (diffX + diffY) / 4;
   sat = map(brightness, 100, 255, sat0, sat1) - (diffX + diffY) / 4;
   val = brightness;
@@ -296,6 +300,7 @@ void loop()
       leds[i].r = dim8_video(leds[i].r);
       leds[i].g = dim8_video(leds[i].g);
       leds[i].b = dim8_video(leds[i].b);
+      leds.setBrightness(brightness);
       sendOSCStream(xy, currentBufferAverage);
       sendOSCStream(x, currentX);
       sendOSCStream(y, currentY);
@@ -347,7 +352,7 @@ void loop()
         isInAnimation = false;
       }
 
-      leds[bumpAnimationIndex] = CRGB(rgbX, 0, rgbY);
+      leds[bumpAnimationIndex] = CRGB(rgbX, rgbY, 0);
       //      DIAG_PRINT(">>>> bumpAnimationIndex: ");
       //      DIAG_PRINTLN(bumpAnimationIndex);
       leds[bumpAnimationIndex - 1].r = dim8_video(leds[bumpAnimationIndex - 1].r);
