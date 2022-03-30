@@ -16,14 +16,14 @@ Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://accelera
 
 ## Prerequisites
 
-This project requires the following external board libraries.
+The Arduino firmware requires the following external board libraries.
 
 - Arduino SAMD
 
 - Adafruit SAMD
   - Requires adding `https://adafruit.github.io/arduino-board-index/package_adafruit_index.json` to _Additional Boards Manager URLs_, see [https://learn.adafruit.com/adafruit-metro-m0-express/arduino-ide-setup](https://learn.adafruit.com/adafruit-metro-m0-express/arduino-ide-setup) and [https://learn.adafruit.com/adafruit-metro-m0-express/using-with-arduino-ide](https://learn.adafruit.com/adafruit-metro-m0-express/using-with-arduino-ide).
 
-This project requires the following external libraries.
+The arduino firmware requires the following external libraries.
 
 - Adafruit MPU6050 >= 2.1.0 and dependencies: [https://github.com/adafruit/Adafruit_MPU6050](https://github.com/adafruit/Adafruit_MPU6050)
 
@@ -45,7 +45,15 @@ This project requires the following external libraries.
 - **EXPERIMENTAL** ArduinoOTA >= 1.0.8: [https://github.com/jandrassy/ArduinoOTA](https://github.com/jandrassy/ArduinoOTA)
   - _Reason_: Used to provide over-the-air firmware flashing.
 
-This project has been tested with Arduino IDE on Windows 10.
+The diagnostics patcher ([Max](https://cycling74.com/products/max) required) requires the following packages:
+
+- CMNAT External >= 1.0.4: [https://cnmat.berkeley.edu/downloads](https://cnmat.berkeley.edu/downloads)
+
+  - _Reason_: To allow better OSC communication.
+
+  - Does not currently support [computers using Apple silicon](https://support.apple.com/en-us/HT211814). Beta version of CMNAT External ([v. 1.0.4c](https://github.com/CNMAT/CNMAT-Externs/releases/tag/v1.0.4c)) should be compatible.
+
+The Arduino firmware has been tested with Arduino IDE on Windows 10. The diagnostics patcher has been tested with Max 8.2.2 on Windows 10.
 
 ## Usage
 

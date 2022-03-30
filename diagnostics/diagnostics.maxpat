@@ -40,6 +40,43 @@
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-4",
+					"maxclass" : "newobj",
+					"numinlets" : 2,
+					"numoutlets" : 2,
+					"outlettype" : [ "", "" ],
+					"patching_rect" : [ 419.0, 542.0, 56.0, 22.0 ],
+					"text" : "zl.lookup"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-3",
+					"linecount" : 2,
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 936.0, 316.0, 101.0, 35.0 ],
+					"text" : "udpreceive 8888 cmnat"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-2",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 3,
+					"outlettype" : [ "", "", "OSCTimeTag" ],
+					"patching_rect" : [ 936.0, 363.0, 111.0, 22.0 ],
+					"text" : "OpenSoundControl"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"fontname" : "Arial",
 					"fontsize" : 24.0,
 					"id" : "obj-50",
@@ -356,7 +393,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 992.0, 557.0, 42.0, 22.0 ],
-					"text" : "pod02"
+					"text" : "pod16"
 				}
 
 			}
@@ -380,7 +417,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 41.0, 106.0, 631.0, 607.0 ],
+						"rect" : [ 41.0, 106.0, 1240.0, 647.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -677,7 +714,7 @@
 									"numinlets" : 1,
 									"numoutlets" : 0,
 									"patching_rect" : [ 26.75, 30.0, 102.0, 41.0 ],
-									"text" : "pod02"
+									"text" : "pod16"
 								}
 
 							}
@@ -703,7 +740,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 1005.0, 600.0, 83.0, 22.0 ],
-									"text" : "/pod02/reboot"
+									"text" : "/pod16/reboot"
 								}
 
 							}
@@ -812,7 +849,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 1213.0, 19.0, 42.0, 22.0 ],
-									"text" : "pod02"
+									"text" : "pod16"
 								}
 
 							}
@@ -965,7 +1002,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 975.0, 360.0, 71.0, 22.0 ],
-									"text" : "/pod02/ping"
+									"text" : "/pod16/ping"
 								}
 
 							}
@@ -978,7 +1015,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 330.0, 75.0, 22.0 ],
-									"text" : "/pod02/ident"
+									"text" : "/pod16/ident"
 								}
 
 							}
@@ -1294,7 +1331,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 30.0, 171.0, 26.0 ],
-									"text" : "/pod02/get_accl_range"
+									"text" : "/pod16/get_accl_range"
 								}
 
 							}
@@ -1308,7 +1345,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 107.0, 179.0, 26.0 ],
-									"text" : "/pod02/reset_calibration"
+									"text" : "/pod16/reset_calibration"
 								}
 
 							}
@@ -1322,7 +1359,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 71.0, 122.0, 26.0 ],
-									"text" : "/pod02/calibrate"
+									"text" : "/pod16/calibrate"
 								}
 
 							}
@@ -2013,7 +2050,7 @@
  ]
 					}
 ,
-					"patching_rect" : [ 936.0, 631.0, 74.0, 29.0 ],
+					"patching_rect" : [ 936.0, 608.0, 74.0, 29.0 ],
 					"saved_object_attributes" : 					{
 						"description" : "",
 						"digest" : "",
@@ -2042,9 +2079,9 @@
 				"box" : 				{
 					"id" : "obj-1",
 					"maxclass" : "newobj",
-					"numinlets" : 0,
-					"numoutlets" : 2,
-					"outlettype" : [ "", "" ],
+					"numinlets" : 1,
+					"numoutlets" : 3,
+					"outlettype" : [ "", "", "OSCTimeTag" ],
 					"patching_rect" : [ 15.0, 615.0, 111.0, 22.0 ],
 					"text" : "OpenSoundControl"
 				}
@@ -2052,6 +2089,13 @@
 			}
  ],
 		"lines" : [ 			{
+				"patchline" : 				{
+					"destination" : [ "obj-26", 1 ],
+					"source" : [ "obj-2", 1 ]
+				}
+
+			}
+, 			{
 				"patchline" : 				{
 					"destination" : [ "obj-28", 1 ],
 					"hidden" : 1,
@@ -2077,6 +2121,13 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
+					"source" : [ "obj-3", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-28", 0 ],
 					"hidden" : 1,
 					"order" : 0,
@@ -2095,8 +2146,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-26", 1 ],
-					"hidden" : 1,
+					"destination" : [ "obj-26", 0 ],
 					"source" : [ "obj-31", 0 ]
 				}
 
@@ -2383,6 +2433,10 @@
 			}
  ],
 		"dependency_cache" : [ 			{
+				"name" : "OpenSoundControl.mxo",
+				"type" : "iLaX"
+			}
+, 			{
 				"name" : "thru.maxpat",
 				"bootpath" : "C74:/patchers/m4l/Pluggo for Live resources/patches",
 				"type" : "JSON",
