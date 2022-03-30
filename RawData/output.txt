@@ -1,0 +1,10 @@
+C:\Users\Tianyu\celestial-garden\main\main.ino: In function 'void parseOSCMessage(OSCMessage&, int)':
+C:\Users\Tianyu\celestial-garden\main\main.ino:593:13: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]
+  593 |     sprintf("%s/ping", oscRouteName);
+      |             ^~~~~~~~~
+Sketch uses 68856 bytes (26%) of program storage space. Maximum is 262144 bytes.
+Connecting to board ...  done
+Uploading sketch ...  done
+Flashing sketch ...  done
+OK
+Sketch uploaded successfully

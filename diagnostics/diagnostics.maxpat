@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 106.0, 925.0, 337.0 ],
+		"rect" : [ 41.0, 106.0, 1418.0, 639.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -53,13 +53,12 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-3",
-					"linecount" : 2,
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 936.0, 316.0, 101.0, 35.0 ],
-					"text" : "udpreceive 8888 cmnat"
+					"patching_rect" : [ 936.0, 316.0, 133.0, 22.0 ],
+					"text" : "udpreceive 8744 cmnat"
 				}
 
 			}
@@ -393,7 +392,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 992.0, 557.0, 42.0, 22.0 ],
-					"text" : "pod16"
+					"text" : "pod07"
 				}
 
 			}
@@ -417,7 +416,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 41.0, 106.0, 1240.0, 647.0 ],
+						"rect" : [ 41.0, 106.0, 896.0, 647.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -445,8 +444,35 @@
 						"style" : "",
 						"subpatcher_template" : "",
 						"assistshowspatchername" : 0,
+						"visible" : 1,
 						"boxes" : [ 							{
 								"box" : 								{
+									"id" : "obj-51",
+									"linecount" : 2,
+									"maxclass" : "newobj",
+									"numinlets" : 1,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 1162.0, 450.0, 68.0, 36.0 ],
+									"text" : "match /pod02/test"
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-47",
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 573.0, 502.0, 115.0, 22.0 ],
+									"text" : "/pod02/test"
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"hidden" : 1,
 									"id" : "obj-58",
 									"maxclass" : "newobj",
 									"numinlets" : 1,
@@ -469,6 +495,7 @@
 							}
 , 							{
 								"box" : 								{
+									"hidden" : 1,
 									"id" : "obj-45",
 									"maxclass" : "button",
 									"numinlets" : 1,
@@ -713,8 +740,8 @@
 									"maxclass" : "comment",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"patching_rect" : [ 26.75, 30.0, 102.0, 41.0 ],
-									"text" : "pod16"
+									"patching_rect" : [ 26.75, 30.0, 114.0, 43.0 ],
+									"text" : "pod07"
 								}
 
 							}
@@ -740,7 +767,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 1005.0, 600.0, 83.0, 22.0 ],
-									"text" : "/pod16/reboot"
+									"text" : "/pod07/reboot"
 								}
 
 							}
@@ -849,7 +876,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 1213.0, 19.0, 42.0, 22.0 ],
-									"text" : "pod16"
+									"text" : "pod07"
 								}
 
 							}
@@ -1002,7 +1029,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 975.0, 360.0, 71.0, 22.0 ],
-									"text" : "/pod16/ping"
+									"text" : "/pod07/ping"
 								}
 
 							}
@@ -1015,7 +1042,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 330.0, 75.0, 22.0 ],
-									"text" : "/pod16/ident"
+									"text" : "/pod07/ident"
 								}
 
 							}
@@ -1043,7 +1070,7 @@
 									"numinlets" : 1,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 1037.0, 272.5, 131.0, 35.0 ],
+									"patching_rect" : [ 1037.0, 272.5, 131.0, 36.0 ],
 									"text" : "match /pod01/reset_complete"
 								}
 
@@ -1257,7 +1284,7 @@
 									"maxclass" : "comment",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"patching_rect" : [ 74.25, 368.0, 160.0, 24.0 ],
+									"patching_rect" : [ 74.25, 368.0, 160.0, 25.0 ],
 									"text" : "Locate and Diagnose",
 									"textjustification" : 1
 								}
@@ -1315,7 +1342,7 @@
 									"maxclass" : "comment",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"patching_rect" : [ 64.25, 107.0, 180.0, 24.0 ],
+									"patching_rect" : [ 64.25, 107.0, 180.0, 25.0 ],
 									"text" : "Accelerator Calibration",
 									"textjustification" : 1
 								}
@@ -1330,8 +1357,8 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 960.0, 30.0, 171.0, 26.0 ],
-									"text" : "/pod16/get_accl_range"
+									"patching_rect" : [ 960.0, 30.0, 171.0, 27.0 ],
+									"text" : "/pod07/get_accl_range"
 								}
 
 							}
@@ -1344,8 +1371,8 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 960.0, 107.0, 179.0, 26.0 ],
-									"text" : "/pod16/reset_calibration"
+									"patching_rect" : [ 960.0, 107.0, 179.0, 27.0 ],
+									"text" : "/pod07/reset_calibration"
 								}
 
 							}
@@ -1358,8 +1385,8 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 960.0, 71.0, 122.0, 26.0 ],
-									"text" : "/pod16/calibrate"
+									"patching_rect" : [ 960.0, 71.0, 122.0, 27.0 ],
+									"text" : "/pod07/calibrate"
 								}
 
 							}
@@ -1427,6 +1454,7 @@
 						"lines" : [ 							{
 								"patchline" : 								{
 									"destination" : [ "obj-45", 0 ],
+									"hidden" : 1,
 									"order" : 1,
 									"source" : [ "obj-100", 0 ]
 								}
@@ -1509,7 +1537,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-15", 0 ],
 									"hidden" : 1,
-									"order" : 1,
+									"order" : 2,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1518,7 +1546,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-24", 0 ],
 									"hidden" : 1,
-									"order" : 9,
+									"order" : 10,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1527,7 +1555,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-25", 0 ],
 									"hidden" : 1,
-									"order" : 8,
+									"order" : 9,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1536,7 +1564,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-26", 0 ],
 									"hidden" : 1,
-									"order" : 5,
+									"order" : 6,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1545,7 +1573,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-27", 0 ],
 									"hidden" : 1,
-									"order" : 7,
+									"order" : 8,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1554,7 +1582,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-28", 0 ],
 									"hidden" : 1,
-									"order" : 0,
+									"order" : 1,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1563,7 +1591,15 @@
 								"patchline" : 								{
 									"destination" : [ "obj-49", 0 ],
 									"hidden" : 1,
-									"order" : 4,
+									"order" : 5,
+									"source" : [ "obj-23", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-51", 0 ],
+									"order" : 0,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1572,7 +1608,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-55", 0 ],
 									"hidden" : 1,
-									"order" : 6,
+									"order" : 7,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1581,7 +1617,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-6", 0 ],
 									"hidden" : 1,
-									"order" : 3,
+									"order" : 4,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1590,7 +1626,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-9", 0 ],
 									"hidden" : 1,
-									"order" : 2,
+									"order" : 3,
 									"source" : [ "obj-23", 0 ]
 								}
 
@@ -1679,6 +1715,7 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-78", 0 ],
+									"hidden" : 1,
 									"source" : [ "obj-45", 0 ]
 								}
 
@@ -1704,6 +1741,13 @@
 									"destination" : [ "obj-54", 0 ],
 									"hidden" : 1,
 									"source" : [ "obj-50", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-47", 1 ],
+									"source" : [ "obj-51", 0 ]
 								}
 
 							}
@@ -1851,6 +1895,7 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-58", 0 ],
+									"hidden" : 1,
 									"order" : 0,
 									"source" : [ "obj-78", 0 ]
 								}
@@ -2070,7 +2115,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 15.0, 30.0, 417.0, 33.0 ],
+					"patching_rect" : [ 15.0, 30.0, 417.0, 34.0 ],
 					"text" : "Celestial Garden Diagnostic Toolkit"
 				}
 
@@ -2433,8 +2478,8 @@
 			}
  ],
 		"dependency_cache" : [ 			{
-				"name" : "OpenSoundControl.mxo",
-				"type" : "iLaX"
+				"name" : "OpenSoundControl.mxe64",
+				"type" : "mx64"
 			}
 , 			{
 				"name" : "thru.maxpat",

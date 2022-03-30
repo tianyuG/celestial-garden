@@ -163,7 +163,8 @@ void setup()
       boardIndex = i;
       DIAG_PRINT("Board matched at index ");
       DIAG_PRINTLN(boardIndex);
-      sprintf(oscRouteName, "/pod0%d", boardIndex + 1);
+      sprintf(oscRouteName, "/pod%0d", boardIndex + 1);
+//      sprintf(oscRouteName, "/pod%d", boardIndex + 1);
     }
   }
   // If boardIndex remains the same, it means that the board is not one of the known boards.
@@ -267,8 +268,8 @@ void loop()
   rollingAverageAcclX /= (float)runningAverageCount;
   rollingAverageAcclY /= (float)runningAverageCount;
 
-  float diffX = abs(rollingAverageAcclX / (maxAcclX - minAcclX) * 255 - 127);
-  float diffY = abs(rollingAverageAcclY / (maxAcclY - minAcclY) * 255 - 127);
+  float diffX = abs(rollingAverageAcclX * 255 - 127);
+  float diffY = abs(rollingAverageAcclY * 255 - 127);
   float rgbX = map((int)diffX, 0, 20, 40, 255);
   float rgbY = map((int)diffY, 0, 20, 40, 255);
 
@@ -295,29 +296,30 @@ void loop()
   // Idle animation
   if (!isInAnimation)
   {
-    for (int i = 0; i < numLeds; i++) {
+    for (int i = 0; i < numLeds; i++)
+    {
       leds[i] = CHSV(hue, sat, val);
       leds[i].r = dim8_video(leds[i].r);
       leds[i].g = dim8_video(leds[i].g);
       leds[i].b = dim8_video(leds[i].b);
-      leds.setBrightness(brightness);
+      //      FastLED.setBrightness(brightness);
       sendOSCStream(xy, currentBufferAverage);
       sendOSCStream(x, currentX);
       sendOSCStream(y, currentY);
       sendAnyOSC("idle " + i);
     }
-//     if (idleAnimationIndex >= numLeds)
-//       idleAnimationIndex = 0;
-//     for (int i = idleAnimationIndex; (i + LIGHTS_PER_CYCLE < numLeds ? i < i + LIGHTS_PER_CYCLE : i < numLeds) ; i++) {
-//       leds[idleAnimationIndex] = CHSV(hue, sat, val);
-//       leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
-//       leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
-//       leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex].b);
-//       sendOSCStream(xy, currentBufferAverage);
-// //      sendOSCStream(x, currentX);
-// //      sendOSCStream(y, currentY);
-//     }
-//     idleAnimationIndex += LIGHTS_PER_CYCLE;
+    //     if (idleAnimationIndex >= numLeds)
+    //       idleAnimationIndex = 0;
+    //     for (int i = idleAnimationIndex; (i + LIGHTS_PER_CYCLE < numLeds ? i < i + LIGHTS_PER_CYCLE : i < numLeds) ; i++) {
+    //       leds[idleAnimationIndex] = CHSV(hue, sat, val);
+    //       leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
+    //       leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
+    //       leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex].b);
+    //       sendOSCStream(xy, currentBufferAverage);
+    // //      sendOSCStream(x, currentX);
+    // //      sendOSCStream(y, currentY);
+    //     }
+    //     idleAnimationIndex += LIGHTS_PER_CYCLE;
     FastLED.show();
   }
   // To make sure that bumpAnimationIndex wraps back to (numLeds - 1) when the last LED has been lit
@@ -326,8 +328,8 @@ void loop()
     isInAnimation = false;
     bumpAnimationIndex = numLeds - 1;
     sendOSCStream(xy, currentBufferAverage);
-//    sendOSCStream(x, currentX);
-//    sendOSCStream(y, currentY);
+    //    sendOSCStream(x, currentX);
+    //    sendOSCStream(y, currentY);
   }
   else
   {
@@ -359,8 +361,8 @@ void loop()
       leds[bumpAnimationIndex - 1].g = dim8_video(leds[bumpAnimationIndex - 1].g);
       leds[bumpAnimationIndex - 1].b = dim8_video(leds[bumpAnimationIndex - 1].b);
       sendOSCStream(xy, currentBufferAverage);
-//      sendOSCStream(x, currentX);
-//      sendOSCStream(y, currentY);
+      //      sendOSCStream(x, currentX);
+      //      sendOSCStream(y, currentY);
       FastLED.show();
     }
   }
@@ -397,8 +399,19 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal)
   DIAG_PRINTLN(currentVal);
 
   OSCMessage msg(boardIdent);
-  (cmd == bump) ? msg.add("bang") : msg.add(currentVal);
+  if (cmd == bump)
+  {
+    msg.add("bang");
+  }
+  else
+  {
+    msg.add(currentVal);
+  }
   Udp.beginPacket(outAddr, outPort);
+  msg.send(Udp);
+  Udp.endPacket();
+  //  msg.empty();
+  Udp.beginPacket(outDiagAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
   msg.empty();
@@ -412,7 +425,7 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal)
  */
 void sendRawAcclOSC(osc_cmds cmd, float currentVal)
 {
-  char boardIdent[12];
+  char boardIdent[18];
   switch (cmd)
   {
   case (x):
@@ -427,32 +440,46 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
   Udp.beginPacket(outAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
+  // msg.empty();
+  Udp.beginPacket(outDiagAddr, outPort);
+  msg.send(Udp);
+  Udp.endPacket();
   msg.empty();
 }
 
 /*
  * Function to send local IP address to server over OSC
  */
-void sendLocalAddrOSC() {
-//  char boardIdent[12];
-//  sprintf(boardIdent, "%s/my_ip", oscRouteName);
-//  OSCMessage msg(boardIdent);
-//  IPAddress myIP = Ethernet.localIP();
-//  char myIPAddr[16];
-//  sprintf(myIPAddr, "%s:%s:%s:%s", String(myIP[0]), String(myIP[1]), String(myIP[2]), String(myIP[3]));
-//  msg.add(myIPAddr);
-//  Udp.beginPacket(outAddr, outPort);
-//  msg.send(Udp);
-//  Udp.endPacket();
-//  msg.empty();
+void sendLocalAddrOSC()
+{
+  //  char boardIdent[12];
+  //  sprintf(boardIdent, "%s/my_ip", oscRouteName);
+  //  OSCMessage msg(boardIdent);
+  //  IPAddress myIP = Ethernet.localIP();
+  //  char myIPAddr[16];
+  //  sprintf(myIPAddr, "%s:%s:%s:%s", String(myIP[0]), String(myIP[1]), String(myIP[2]), String(myIP[3]));
+  //  msg.add(myIPAddr);
+  //  Udp.beginPacket(outAddr, outPort);
+  //  msg.send(Udp);
+  //  Udp.endPacket();
+  //  msg.empty();
+  // Udp.beginPacket(outDiagAddr, outPort);
+  //   msg.send(Udp);
+  //   Udp.endPacket();
+  //   msg.empty();
 }
 
-void sendAnyOSC(String msgBody) {
+void sendAnyOSC(String msgBody)
+{
   char boardIdent[12];
   sprintf(boardIdent, "%s/any", oscRouteName);
   OSCMessage msg(boardIdent);
   msg.add(msgBody);
   Udp.beginPacket(outAddr, outPort);
+  msg.send(Udp);
+  Udp.endPacket();
+  // msg.empty();
+  Udp.beginPacket(outDiagAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
   msg.empty();
@@ -487,14 +514,18 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     maxAcclX = dMaxAcclX;
     minAcclY = dMinAcclY;
     maxAcclY = dMaxAcclY;
-    
+
     sprintf(boardIdent, "%s/reset_complete", oscRouteName);
     OSCMessage response(boardIdent);
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
+    // response.empty();
+    Udp.beginPacket(outDiagAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
     response.empty();
-    delay(500);
+    // delay(500);
   }
   else if (msg.fullMatch("/ident", offset))
   {
@@ -526,6 +557,10 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
+    // response.empty();
+    Udp.beginPacket(outDiagAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
     response.empty();
   }
   else if (msg.fullMatch("/calibrate", offset))
@@ -534,7 +569,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     FastLED.setBrightness(127);
     fill_solid(leds, numLeds, CRGB(255, 255, 0));
     FastLED.show();
-    
+
     while (millis() - startTime < CALIBRATION_DURATION)
     {
       sensors_event_t accl, gyro, temp;
@@ -551,11 +586,17 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     FastLED.clear();
     FastLED.show();
     delay(1000);
-  } else if (msg.fullMatch("/ping", offset)) {
+  }
+  else if (msg.fullMatch("/ping", offset))
+  {
     char boardIdent[12];
     sprintf("%s/ping", oscRouteName);
     OSCMessage response(boardIdent);
     Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    // response.empty();
+    Udp.beginPacket(outDiagAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
     response.empty();
