@@ -40,6 +40,17 @@
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-6",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 651.0, 540.0, 165.0, 22.0 ],
+					"text" : "udpsend 192.168.1.104 8744"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-4",
 					"maxclass" : "newobj",
 					"numinlets" : 2,
@@ -392,7 +403,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 992.0, 557.0, 42.0, 22.0 ],
-					"text" : "pod07"
+					"text" : "pod04"
 				}
 
 			}
@@ -741,7 +752,7 @@
 									"numinlets" : 1,
 									"numoutlets" : 0,
 									"patching_rect" : [ 26.75, 30.0, 114.0, 43.0 ],
-									"text" : "pod07"
+									"text" : "pod04"
 								}
 
 							}
@@ -767,7 +778,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 1005.0, 600.0, 83.0, 22.0 ],
-									"text" : "/pod07/reboot"
+									"text" : "/pod04/reboot"
 								}
 
 							}
@@ -876,7 +887,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 1213.0, 19.0, 42.0, 22.0 ],
-									"text" : "pod07"
+									"text" : "pod04"
 								}
 
 							}
@@ -1029,7 +1040,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 975.0, 360.0, 71.0, 22.0 ],
-									"text" : "/pod07/ping"
+									"text" : "/pod04/ping"
 								}
 
 							}
@@ -1042,7 +1053,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 330.0, 75.0, 22.0 ],
-									"text" : "/pod07/ident"
+									"text" : "/pod04/ident"
 								}
 
 							}
@@ -1358,7 +1369,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 30.0, 171.0, 27.0 ],
-									"text" : "/pod07/get_accl_range"
+									"text" : "/pod04/get_accl_range"
 								}
 
 							}
@@ -1372,7 +1383,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 107.0, 179.0, 27.0 ],
-									"text" : "/pod07/reset_calibration"
+									"text" : "/pod04/reset_calibration"
 								}
 
 							}
@@ -1386,7 +1397,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 960.0, 71.0, 122.0, 27.0 ],
-									"text" : "/pod07/calibrate"
+									"text" : "/pod04/calibrate"
 								}
 
 							}
@@ -2153,6 +2164,13 @@
 					"destination" : [ "obj-30", 0 ],
 					"hidden" : 1,
 					"source" : [ "obj-24", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-6", 0 ],
+					"source" : [ "obj-26", 0 ]
 				}
 
 			}

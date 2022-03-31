@@ -50,7 +50,7 @@ FASTLED_USING_NAMESPACE
 // How many LEDs should be turned on per cycle
 #define LIGHTS_PER_CYCLE 3
 // The threshold for a motion to be determined to be a bump
-#define BUMP_THRESHOLD 10
+#define BUMP_THRESHOLD 1
 // How long should Arduino remain in calibration mode (milliseconds)
 #define CALIBRATION_DURATION 20000
 
@@ -65,6 +65,8 @@ enum osc_cmds
 
 float rollingAverageBufferX[runningAverageCount];
 float rollingAverageBufferY[runningAverageCount];
+float buffDiffX[runningAverageCount];
+float buffDiffY[runningAverageCount];
 uint8_t bufferIndex = 0;
 float previousBufferAverage = 0;
 float currentBufferAverage = 0;
@@ -163,7 +165,7 @@ void setup()
       boardIndex = i;
       DIAG_PRINT("Board matched at index ");
       DIAG_PRINTLN(boardIndex);
-      sprintf(oscRouteName, "/pod%0d", boardIndex + 1);
+      sprintf(oscRouteName, "/pod%02d", boardIndex + 1);
 //      sprintf(oscRouteName, "/pod%d", boardIndex + 1);
     }
   }
@@ -255,7 +257,7 @@ void loop()
 
   // Use a buffer to calculate rolling average for accelerometer readouts
   rollingAverageBufferX[bufferIndex] = rawAcclX;
-  rollingAverageBufferY[bufferIndex++] = rawAcclY;
+  rollingAverageBufferY[bufferIndex] = rawAcclY;
   if (runningAverageCount <= bufferIndex)
     bufferIndex = 0;
   float rollingAverageAcclX = 0;
@@ -272,6 +274,18 @@ void loop()
   float diffY = abs(rollingAverageAcclY * 255 - 127);
   float rgbX = map((int)diffX, 0, 20, 40, 255);
   float rgbY = map((int)diffY, 0, 20, 40, 255);
+  buffDiffX[bufferIndex] += diffX;
+  buffDiffY[bufferIndex++] += diffY;
+  float avgDiffX = 0;
+  float avgDiffY = 0;
+  for (int i = 0; i < runningAverageCount; i++) {
+    avgDiffX += buffDiffX[i];
+    avgDiffY += buffDiffY[i];
+  }
+
+  avgDiffX /= runningAverageCount;
+  avgDiffY /= runningAverageCount;
+  
 
   currentBufferAverage = (rgbX + rgbY) / 2;
   currentX = rgbX;
@@ -281,9 +295,9 @@ void loop()
   sendOSCStream(x, currentX);
   sendOSCStream(y, currentY);
 
-  brightness = (float)beatsin16(20, 240, 255) / 256. - (diffX + diffY) / 4;
-  hue = map(brightness, 100, 255, hue0, hue1) + (diffX + diffY) / 4;
-  sat = map(brightness, 100, 255, sat0, sat1) - (diffX + diffY) / 4;
+  brightness = (float)beatsin16(20, 240, 255) / 256. - (avgDiffX + avgDiffY) * 4;
+  hue = map(brightness, 100, 255, hue0, hue1) + (avgDiffX + avgDiffY) / 4;
+  sat = map(brightness, 100, 255, sat0, sat1) - (avgDiffX + avgDiffY) / 4;
   val = brightness;
 
   DIAG_PRINT(" HUE ");
@@ -312,7 +326,7 @@ void loop()
     //       idleAnimationIndex = 0;
     //     for (int i = idleAnimationIndex; (i + LIGHTS_PER_CYCLE < numLeds ? i < i + LIGHTS_PER_CYCLE : i < numLeds) ; i++) {
     //       leds[idleAnimationIndex] = CHSV(hue, sat, val);
-    //       leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
+    //       leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r); 
     //       leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
     //       leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex].b);
     //       sendOSCStream(xy, currentBufferAverage);
@@ -346,7 +360,8 @@ void loop()
   }
   if (isInAnimation)
   {
-    for (int i = 0; i < LIGHTS_PER_CYCLE; i++)
+    // TODO CHANGE
+    for (int i = 0; i < 240; i++)
     {
       if (--bumpAnimationIndex < 0)
       {
@@ -363,6 +378,8 @@ void loop()
       sendOSCStream(xy, currentBufferAverage);
       //      sendOSCStream(x, currentX);
       //      sendOSCStream(y, currentY);
+      sendRawAcclOSC(x, rawAcclX);
+  sendRawAcclOSC(y, rawAcclY);
       FastLED.show();
     }
   }

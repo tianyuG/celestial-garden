@@ -6,6 +6,7 @@
     - [Board Refuses to Respond to OSC Messages](#board-refuses-to-respond-to-osc-messages)
   - [Investigating](#investigating)
     - [Bump animation too short](#bump-animation-too-short)
+    - [Pods are unresponsive or network data output is slow](#pods-are-unresponsive-or-network-data-output-is-slow)
 
 ## Won't Fix/Can't Fix
 
@@ -32,3 +33,7 @@ Currently suspecting that the UDP module may not have fully initialised after a 
 ### Bump animation too short
 
 Working on a buffer for HSV values to hopefully even out the result a bit.
+
+### Pods are unresponsive or network data output is slow
+
+Currently, both the audio computer and the diagnostics computer need to be connected to the network for the pods to be functioning properly. Ensure the connection to both computers are connected and stable.
