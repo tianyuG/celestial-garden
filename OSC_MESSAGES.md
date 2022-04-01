@@ -16,6 +16,7 @@
   - [(R) `ident`](#r-ident)
   - [(S) `my_ip` [Data]](#s-my_ip-data)
   - [(S, R) `ping`](#s-r-ping)
+  - [(S, R) `version`](#s-r-version)
   
 ## General rules
 
@@ -42,7 +43,7 @@
 /pod[ID]/y [Data]
 ```
 
-_Handled by main `loop()`._
+_Handled by `sendOSCStream()`._
 
 **Sends** X- or Y-axis accelerometer data.
 
@@ -54,7 +55,7 @@ _Handled by main `loop()`._
 /pod[ID]/xy [Data]
 ```
 
-_Handled by main `loop()`._
+_Handled by `sendOSCStream()`._
 
 **Sends** current average of the colour value controlled by the X- and Y-axis motion.
 
@@ -66,7 +67,7 @@ _Handled by main `loop()`._
 /pod[ID]/xy bang
 ```
 
-_Handled by main `loop()`._
+_Handled by `sendOSCStream()`._
 
 **Sends** to notify that a bump is detected.
 
@@ -201,3 +202,9 @@ _Handled by `parseOSCMessage()`._
 _Handled by `parseOSCMessage()`._
 
 **Receives** ping from server and **sends** a response to ensure the program had not halted. Used for testing purposes.
+
+## (S, R) `version`
+
+_Handled by `parseOSCMessage()`
+
+**Receives** request from server and **sends** the internal version of the firmware. This functionality was not implemented prior to 1 April.
