@@ -399,24 +399,28 @@ void loop()
     {
       for (int i = 0; i < ANIMATION_LIGHTS_PER_CYCLE; i++)
       {
-        if (bumpAnimationIndex < numLeds && bumpAnimationIndex > -1 * numLeds)
+        int currentIndex = bumpAnimationIndex;
+        if (currentIndex < numLeds && currentIndex >= 0)
         {
-          //        bumpAnimationIndex = numLeds - 1;
+          //        currentIndex = numLeds - 1;
           //        isInAnimation = false;
-          leds[bumpAnimationIndex] = CRGB(rgbX, rgbY, 0);
+          leds[currentIndex] = CRGB(rgbX, rgbY, 0);
+        } else if (currentIndex < 0 && currentIndex > -1 * numLeds) {
+          leds[-1 * currentIndex] = CRGB(rgbX, rgbY, 0);
         }
         else
         {
-          bumpAnimationIndex = numLeds - 1;
+          currentIndex = numLeds - 1;
           isInAnimation = false;
         }
 
-        //      leds[bumpAnimationIndex] = CRGB(rgbX, rgbY, 0);
-        //      DIAG_PRINT(">>>> bumpAnimationIndex: ");
-        //      DIAG_PRINTLN(bumpAnimationIndex);
-        leds[bumpAnimationIndex].r = dim8_video(leds[bumpAnimationIndex].r);
-        leds[bumpAnimationIndex].g = dim8_video(leds[bumpAnimationIndex].g);
-        leds[bumpAnimationIndex].b = dim8_video(leds[bumpAnimationIndex--].b);
+        //      leds[currentIndex] = CRGB(rgbX, rgbY, 0);
+        //      DIAG_PRINT(">>>> currentIndex: ");
+        //      DIAG_PRINTLN(currentIndex);
+        leds[currentIndex].r = dim8_video(leds[currentIndex].r);
+        leds[currentIndex].g = dim8_video(leds[currentIndex].g);
+        leds[currentIndex].b = dim8_video(leds[currentIndex--].b);
+        bumpAnimationIndex = currentIndex;
         sendOSCStream(xy, currentBufferAverage);
         //      sendOSCStream(x, currentX);
         //      sendOSCStream(y, currentY);
