@@ -23,31 +23,32 @@ The Arduino firmware requires the following external board libraries.
 - Adafruit SAMD
   - Requires adding `https://adafruit.github.io/arduino-board-index/package_adafruit_index.json` to _Additional Boards Manager URLs_, see [https://learn.adafruit.com/adafruit-metro-m0-express/arduino-ide-setup](https://learn.adafruit.com/adafruit-metro-m0-express/arduino-ide-setup) and [https://learn.adafruit.com/adafruit-metro-m0-express/using-with-arduino-ide](https://learn.adafruit.com/adafruit-metro-m0-express/using-with-arduino-ide).
 
-The arduino firmware requires the following external libraries.
+The Arduino firmware requires the following external libraries.
 
-- Adafruit MPU6050 >= 2.1.0 and dependencies: [https://github.com/adafruit/Adafruit_MPU6050](https://github.com/adafruit/Adafruit_MPU6050)
+- [Adafruit MPU6050](https://github.com/adafruit/Adafruit_MPU6050) >= 2.1.0 and dependencies
 
   - _Reason_: Required library for accelerometer.
-  - Dependencies include both Adafruit BusIO (>= 1.11.2, [https://github.com/adafruit/Adafruit_BusIO](https://github.com/adafruit/Adafruit_BusIO)) and Adafruit Unified Sensor (>= 1.1.5, [https://github.com/adafruit/Adafruit_Sensor](https://github.com/adafruit/Adafruit_Sensor)).
+  - Dependencies include both [Adafruit BusIO](https://github.com/adafruit/Adafruit_BusIO) (>= 1.11.2) and [Adafruit Unified Sensor](https://github.com/adafruit/Adafruit_Sensor) (>= 1.1.5).
 
-- ArduinoUniqueID >= 1.2.0: [https://github.com/ricaun/ArduinoUniqueID](https://github.com/ricaun/ArduinoUniqueID)
+- [ArduinoUniqueID](https://github.com/ricaun/ArduinoUniqueID) >= 1.2.0
 
   - _Reason_: Used to determine the board ID and automatically assign MAC and IP addresses.
 
-- FastLED >= 3.5.0: [https://github.com/FastLED/FastLED](https://github.com/FastLED/FastLED)
+- [FastLED](https://github.com/FastLED/FastLED) >= 3.5.0;
 
   - _Reason_: Used to control LED strip.
 
-- OSC >= 1.3.5: [https://github.com/CNMAT/OSC](https://github.com/CNMAT/OSC)
+- [OSC](https://github.com/CNMAT/OSC) >= 1.3.5;
 
   - _Reason_: Used to send messages over local network.
 
-- **EXPERIMENTAL** ArduinoOTA >= 1.0.8: [https://github.com/jandrassy/ArduinoOTA](https://github.com/jandrassy/ArduinoOTA)
+- **EXPERIMENTAL** [ArduinoOTA](https://github.com/jandrassy/ArduinoOTA) >= 1.0.8.
+
   - _Reason_: Used to provide over-the-air firmware flashing.
 
-The diagnostics patcher ([Max](https://cycling74.com/products/max) required) requires the following packages:
+The diagnostics [Max](https://cycling74.com/products/max) patcher requires the following packages:
 
-- CMNAT External >= 1.0.4: [https://cnmat.berkeley.edu/downloads](https://cnmat.berkeley.edu/downloads)
+- [CNMAT External](https://cnmat.berkeley.edu/downloads) >= 1.0.4.
 
   - _Reason_: To allow better OSC communication.
 

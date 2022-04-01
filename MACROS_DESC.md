@@ -2,9 +2,11 @@
 
 Changing these macros will not affect the visual behaviour.
 
-- `DISPLAY_DIAG`: (Set by default) Unset this macro to disable diagnostic information over serial connection.
+- `DISPLAY_DIAG`: Unset this macro to disable diagnostic information over serial connection.
   - `DIAG_PRINT`, `DIAG_PRINTLN` and `DIAG_PRINTHEX` outputs diagnostic information in Serial Monitor if `DISPLAY_DIAG` is set. Otherwise those diagnostic information will be ignored.
-- `ENABLE_OTA`: (Set by default) Unset this macro to disable over-the-air firmware updates.
+- `ENABLE_OTA`: (Set this macro for production use) Unset this macro to disable over-the-air firmware updates.
+- `ENABLE_OSC`: (Set this macro for production use) Unset this macro to completely disable OpenSoundControl in the firmware. Can be helpful during testing.
+  - If unset, the five-second LED light-up test will also be disabled.
 - `SERIAL_INIT_DELAY`: How long will Arduino wait before assuming that Serial connection is established. The code will halt if blocking logic (such as `while (!Serial) delay(10);`) is used. (in milliseconds)
 - `CALIBRATION_DURATION`: How long should a [calibration cycle](OSC_MESSAGES.md#r-calibrate) be. (in milliseconds)
 

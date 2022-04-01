@@ -36,6 +36,8 @@
 
 - 28 May 2022: Added new message `my_ip` and changed messaged from camelCase to snake_case. This can be breaking for some previous messages such as `acclx` (changed to `accl_x`) and `accly` (changed to `accl_y`), but the rationale behind this change was to improve readability. In addition, none of the messages were previously used in the Max/MSP patch, so these changes should not affect anything that's working currently.
 
+- 1 April 2022: The OSC messaging can be completely turned off by unsetting the `ENABLE_OSC` macro. This can be useful during testing.
+
 ## (S) `x` or `y` [Data]
 
 ```
