@@ -85,8 +85,9 @@ static const IPAddress ipAddr[numBoards] = {
     IPAddress(192, 168, 1, 118) 
 };
 
-static const IPAddress outAddr(192, 168, 1, 42);
-static const IPAddress outDiagAddr(192, 168, 1, 84);
+static const IPAddress outAddr(192, 168, 1, 255);
+// static const IPAddress outAddr(192, 168, 1, 42);
+// static const IPAddress outDiagAddr(192, 168, 1, 84);
 
 static const unsigned int outPort = 8744;
 

@@ -473,10 +473,10 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal)
   msg.send(Udp);
   Udp.endPacket();
   //  msg.empty();
-  Udp.beginPacket(outDiagAddr, outPort);
-  msg.send(Udp);
-  Udp.endPacket();
-  msg.empty();
+  // Udp.beginPacket(outDiagAddr, outPort);
+  // msg.send(Udp);
+  // Udp.endPacket();
+  // msg.empty();
 #endif
 }
 
@@ -505,10 +505,10 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
   msg.send(Udp);
   Udp.endPacket();
   // msg.empty();
-  Udp.beginPacket(outDiagAddr, outPort);
-  msg.send(Udp);
-  Udp.endPacket();
-  msg.empty();
+  // Udp.beginPacket(outDiagAddr, outPort);
+  // msg.send(Udp);
+  // Udp.endPacket();
+  // msg.empty();
 #endif
 }
 
@@ -517,17 +517,17 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
  */
 void sendLocalAddrOSC()
 {
-  //  char boardIdent[12];
-  //  sprintf(boardIdent, "%s/my_ip", oscRouteName);
-  //  OSCMessage msg(boardIdent);
-  //  IPAddress myIP = Ethernet.localIP();
-  //  char myIPAddr[16];
-  //  sprintf(myIPAddr, "%s:%s:%s:%s", String(myIP[0]), String(myIP[1]), String(myIP[2]), String(myIP[3]));
-  //  msg.add(myIPAddr);
-  //  Udp.beginPacket(outAddr, outPort);
-  //  msg.send(Udp);
-  //  Udp.endPacket();
-  //  msg.empty();
+   char boardIdent[12];
+   sprintf(boardIdent, "%s/my_ip", oscRouteName);
+   OSCMessage msg(boardIdent);
+   IPAddress myIP = Ethernet.localIP();
+   char myIPAddr[16];
+   sprintf(myIPAddr, "%i:%i:%i:%i", myIP[0], myIP[1], myIP[2], myIP[3]);
+   msg.add(myIPAddr);
+   Udp.beginPacket(outAddr, outPort);
+   msg.send(Udp);
+   Udp.endPacket();
+   msg.empty();
   // Udp.beginPacket(outDiagAddr, outPort);
   //   msg.send(Udp);
   //   Udp.endPacket();
@@ -545,10 +545,10 @@ void sendAnyOSC(String msgBody)
   msg.send(Udp);
   Udp.endPacket();
   // msg.empty();
-  Udp.beginPacket(outDiagAddr, outPort);
-  msg.send(Udp);
-  Udp.endPacket();
-  msg.empty();
+  // Udp.beginPacket(outDiagAddr, outPort);
+  // msg.send(Udp);
+  // Udp.endPacket();
+  // msg.empty();
 #endif
 }
 
@@ -589,10 +589,10 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     response.send(Udp);
     Udp.endPacket();
     // response.empty();
-    Udp.beginPacket(outDiagAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
+    // Udp.beginPacket(outDiagAddr, outPort);
+    // response.send(Udp);
+    // Udp.endPacket();
+    // response.empty();
     // delay(500);
   }
   else if (msg.fullMatch("/ident", offset))
@@ -626,10 +626,10 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     response.send(Udp);
     Udp.endPacket();
     // response.empty();
-    Udp.beginPacket(outDiagAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
+    // Udp.beginPacket(outDiagAddr, outPort);
+    // response.send(Udp);
+    // Udp.endPacket();
+    // response.empty();
   }
   else if (msg.fullMatch("/calibrate", offset))
   {
@@ -664,10 +664,25 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     response.send(Udp);
     Udp.endPacket();
     // response.empty();
-    Udp.beginPacket(outDiagAddr, outPort);
+    // Udp.beginPacket(outDiagAddr, outPort);
+    // response.send(Udp);
+    // Udp.endPacket();
+    // response.empty();
+  }
+  else if (msg.fullMatch("/version", offset))
+  {
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/version", oscRouteName);
+    OSCMessage response(boardIdent);
+    response.add(version);
+    Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
-    response.empty();
+    // response.empty();
+    // Udp.beginPacket(outDiagAddr, outPort);
+    // response.send(Udp);
+    // Udp.endPacket();
+    // response.empty();
   }
 #endif
 }
