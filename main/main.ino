@@ -99,15 +99,19 @@ uint16_t scaledY = 0;
 float deltaX = 0.;
 float deltaY = 0.;
 float accl[2];
+float rollingAverageAcclX = 0;
+float rollingAverageAcclY = 0;
+bool needsFadeIn = false;
 
-//CRGBArray<numLeds> leds;
+// CRGBArray<numLeds> leds;
 CRGB leds[numLeds];
-//CRGBSet leds_t(leds(0, numLeds - numBttmLeds - 1));
-//CRGBSet leds_b(leds(numLeds - numBttmLeds, numLeds - 1));
-// CRGBPalette16 currentPalette;
-// //  Two halves of the led strip
-// CRGBSet leds0(leds(0, numLeds / 2 - 1));
-// CRGBSet leds1(leds(numLeds / 2, numLeds - 1));
+CRGB ghostLeds[numLeds];
+// CRGBSet leds_t(leds(0, numLeds - numBttmLeds - 1));
+// CRGBSet leds_b(leds(numLeds - numBttmLeds, numLeds - 1));
+//  CRGBPalette16 currentPalette;
+//  //  Two halves of the led strip
+//  CRGBSet leds0(leds(0, numLeds / 2 - 1));
+//  CRGBSet leds1(leds(numLeds / 2, numLeds - 1));
 TBlendType currentBlending;
 // CHSV startCRGB, endCRGB;
 uint8_t hue = 0;
@@ -129,6 +133,7 @@ uint8_t maxVal = 255;
 uint8_t hueB[blendCount];
 uint8_t satB[blendCount];
 float valB[blendCount];
+CHSV top_start, top_end, bottom_start, bottom_end;
 
 // The identification number of the board
 uint8_t boardIndex = 127;
@@ -219,9 +224,9 @@ void setup()
   DIAG_PRINT("Corresponding IP address is ");
   DIAG_PRINTLN(Ethernet.localIP());
 
-  #ifdef ENABLE_OSC
-  sendLocalAddrOSC();
-  #endif
+  //#ifdef ENABLE_OSC
+  //  sendLocalAddrOSC();
+  //#endif
 
   // Udp.begin(outPort);
   if (Udp.begin(outPort))
@@ -257,148 +262,163 @@ void loop()
 //  EVERY_N_MILLISECONDS(8)
 //  {
 #ifdef ENABLE_OTA
-    ArduinoOTA.poll();
+  ArduinoOTA.poll();
 #endif
 #ifdef ENABLE_OSC
-    OSCBundle msgIn;
-    int msgSize;
-    if ((msgSize = Udp.parsePacket()) > 0)
+  OSCBundle msgIn;
+  int msgSize;
+  if ((msgSize = Udp.parsePacket()) > 0)
+  {
+    while (msgSize--)
     {
-      while (msgSize--)
-      {
-        msgIn.fill(Udp.read());
-        if (!msgIn.hasError())
-          msgIn.route(oscRouteName, parseOSCMessage);
-      }
+      msgIn.fill(Udp.read());
+      if (!msgIn.hasError())
+        msgIn.route(oscRouteName, parseOSCMessage);
     }
+  }
 #endif
 
-    pollAccl();
+  pollAccl();
 
-    float rawAcclX = accl[0];
-    float rawAcclY = accl[1];
+  //    DIAG_PRINT("scaledX: ");
+  //    DIAG_PRINT(scaledX);
+  //    DIAG_PRINT(" scaledY: ");
+  //    DIAG_PRINTLN(scaledY);
+  updateIdleHSV();
 
-    // Send raw accelerometer data over OSC
-    #ifdef ENABLE_OSC
-    sendRawAcclOSC(x, rawAcclX);
-    sendRawAcclOSC(y, rawAcclY);
-    #endif
-//    DIAG_PRINT("rawAcclX: ");
-//    DIAG_PRINT(rawAcclX);
-//    DIAG_PRINT(" rawAcclY: ");
-//    DIAG_PRINTLN(rawAcclY);
-
-    // Use a buffer to calculate rolling average for accelerometer readouts
-    rollingAverageBufferX[bufferIndex] = rawAcclX;
-    rollingAverageBufferY[bufferIndex] = rawAcclY;
-    if (++bufferIndex >= runningAverageCount)
-      bufferIndex = 0;
-    float rollingAverageAcclX = 0;
-    float rollingAverageAcclY = 0;
-    for (int i = 0; i < runningAverageCount; ++i)
+  if (abs(deltaX) + abs(deltaY) > bumpThreshold && millis() - animationTimer > animationTimeout)
+  {
+    for (int i = numLeds; i > 4; --i)
     {
-      rollingAverageAcclX += rollingAverageBufferX[i];
-      rollingAverageAcclY += rollingAverageBufferY[i];
-    }
-//    DIAG_PRINT("= rollingAverageBufferX: ");
-//    for (int i = 0; i < runningAverageCount; i++){
-//      DIAG_PRINT(rollingAverageBufferX[i]);
-//      DIAG_PRINT(" ");
-//    }
-//    DIAG_PRINTLN(" ");
-    rollingAverageAcclX /= (float)runningAverageCount;
-    rollingAverageAcclY /= (float)runningAverageCount;
-    deltaX = rawAcclX - rollingAverageAcclX;
-    deltaY = rawAcclY - rollingAverageAcclY;
-//    DIAG_PRINT("- rollingAverageAcclX: ");
-//    DIAG_PRINT(rollingAverageAcclX);
-//    DIAG_PRINT(" rollingAverageAcclY: ");
-//    DIAG_PRINTLN(rollingAverageAcclY);
-    DIAG_PRINT("deltaX: ");
-    DIAG_PRINT(deltaX);
-    DIAG_PRINT(" deltaY: ");
-    DIAG_PRINTLN(deltaY);
+      // TODO: Implement bump colour
+      for (int j = 0; j < 6; j++)
+      {
+        if (i > 0)
+        {
+          leds[j == 5 ? i : i--] = CRGB(50, 0, 50);
+          pollAccl();
+        }
+        //        leds[i] = CRGB(50, 0, 50);
+      }
 
-    
-    scaledX = constrain(map(rollingAverageAcclX, minAcclX, maxAcclX, 160, 255), 160, 255);
-    scaledY = constrain(map(rollingAverageAcclY, minAcclY, maxAcclY, 160, 255), 160, 255);
-    sendOSCStream(x, scaledX);
-    sendOSCStream(y, scaledY);
-//    DIAG_PRINT("scaledX: ");
-//    DIAG_PRINT(scaledX);
-//    DIAG_PRINT(" scaledY: ");
-//    DIAG_PRINTLN(scaledY);
-    hue = map(scaledX - 30, 130, 225, hue0, hue1) + deltaY * 5 + beatsin8(3, 40, 255) / 20;
-    sat = map(scaledY - 30, 130, 225, sat0, sat1) + deltaX * 5;
-    val = (float)beatsin16(7, 0, 15300) / 256. + 100.;
-//    val = exp(sin(0.5 * millis() / 2000. * PI) - 0.36787944) * 62.9094299;
-//    val = map_f((scaledX + scaledY) / 4, 50, 145, val0, val1) + constrain((deltaX + deltaY) * 25, -10, 10) + exp(sin(0.1 * millis() / 2000. * PI) - 0.36787944) * 31.9094299;
-
-    DIAG_PRINT(" HUE ");
-    DIAG_PRINT(hue);
-    DIAG_PRINT(" SAT ");
-    DIAG_PRINT(sat);
-    DIAG_PRINT(" VAL ");
-    DIAG_PRINTLN(val);
-
-    if (!isInAnimation)
-    {
-      fill_gradient(leds, 0, CHSV(hue, constrain(sat * 0.8, 40, 200), val - 50), numLeds - numBttmLeds - 1, CHSV(constrain(hue * 0.9, 40, 200) + boardIndex, constrain(sat * 0.8, 40, 200) - boardIndex, val - 40), SHORTEST_HUES);
-      fill_gradient(leds, numLeds - numBttmLeds, CHSV(hue, constrain(sat * 1.5, 40, 230), val + 20), numLeds - 1, CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 230) + boardIndex, val + 10), BACKWARD_HUES);
-//      for (int i = 0; i < numLeds; i++) {
-//        leds[i].r = dim8_video(leds[i].r);
-//        leds[i].g = dim8_video(leds[i].g);
-//        leds[i].b = dim8_video(leds[i].b);
-////        FastLED.show();
-//      }
-//      for (int i = 0; i < numLeds; i++)
-//      {
-//        leds[i] = CHSV(hue, sat, val);
-//        leds[i].r = dim8_video(leds[i].r);
-//        leds[i].g = dim8_video(leds[i].g);
-//        leds[i].b = dim8_video(leds[i].b);
-////        if (idleAnimationIndex > numLeds - numBttmLeds && idleAnimationIndex < numLeds)
-////        {
-////          leds[idleAnimationIndex] = CHSV(hue - 29, sat - 11, val);
-////          
-//////          leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
-//////          leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
-//////          leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
-////        } else if (idleAnimationIndex >= 0 && idleAnimationIndex <= numLeds - numBttmLeds)
-////        {
-////          leds[idleAnimationIndex] = CHSV(hue, sat, val);
-//////          leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
-//////          leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
-//////          leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
-////        }
-////        else
-////        {
-////          idleAnimationIndex = numLeds - 1;
-//////          i = IDLING_LIGHTS_PER_CYCLE;
-////          // break;
-////        }
-//        
-////        leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
-////        leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
-////        leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
-////        FastLED.setBrightness(brightness);
-////        FastLED.show();
-//
-//        //      FastLED.setBrightness(brightness);
-////        sendOSCStream(xy, currentBufferAverage);
-////        sendOSCStream(x, currentX);
-////        sendOSCStream(y, currentY);
-//        
-//        //      FastLED.setBrightness(brightness);
-//        //      FastLED.delay(1);
-////        FastLED.delay(1);
-//      }
+      //      leds[i--] = CRGB(50, 0, 50);
+      //      pollAccl();
+      //      leds[i--] = CRGB(50, 0, 50);
+      //      pollAccl();
+      //      leds[i--] = CRGB(50, 0, 50);
+      //      pollAccl();
+      //      leds[i--] = CRGB(50, 0, 50);
+      //      pollAccl();
+      //      leds[i] = CRGB(50, 0, 50);
+      //      pollAccl();
       FastLED.show();
-//      FastLED.delay(1);
     }
-    
-    
-//  }
+    //    uint8_t currBrightness = FastLED.getBrightness() / ceil(numLeds / 5);
+    for (int i = 0; i < numLeds - 4; i++)
+    {
+      for (int j = 0; j < 6; j++)
+      {
+        if (i > 0)
+        {
+          updateIdleHSV();
+          leds[j == 5 ? i : i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
+        }
+      }
+
+      //      updateIdleHSV();
+      //      leds[i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
+      //      updateIdleHSV();
+      //      leds[i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
+      //      updateIdleHSV();
+      //      leds[i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
+      //      updateIdleHSV();
+      //      leds[i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
+      //      updateIdleHSV();
+      //      leds[i] = CHSV(hue, constrain(sat * 0.8, 40, 200), val - 50);
+      //      FastLED.setBrightness(constrain(FastLED.getBrightness() - currBrightness, 0, 255));
+      FastLED.show();
+    }
+    needsFadeIn = true;
+
+    //    for (int i = 0; i < numLeds; i++){
+    //      leds[i].r = dim8_video(leds[i].r);
+    //      leds[i].g = dim8_video(leds[i].g);
+    //      leds[i].b = dim8_video(leds[i].b);
+    //      FastLED.show();
+    //    }
+  }
+  if (!isInAnimation)
+  {
+    //    if (needsFadeIn) {
+    //      needsFadeIn = false;
+    //      fill_gradient(leds, 0, CHSV(hue, constrain(sat * 0.8, 40, 200), 0), numLeds - numBttmLeds - 1, CHSV(constrain(hue * 0.9, 40, 200) + boardIndex, constrain(sat * 0.8, 40, 200) - boardIndex, 0), SHORTEST_HUES);
+    //    fill_gradient(leds, numLeds - numBttmLeds, CHSV(hue, constrain(sat * 1.5, 40, 230), 0), numLeds - 1, CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 230) + boardIndex, 00), BACKWARD_HUES);
+    //      for (int i = 0; i < val; i++) {
+    //        FastLED.setBrightness(i);
+    //        FastLED.show();
+    //      }
+    //    }
+    //    fill_gradient(ghostLeds, 0, CHSV(hue, constrain(sat * 0.8, 40, 200), val - 50), numLeds - numBttmLeds - 1, CHSV(constrain(hue * 0.9, 40, 200) + boardIndex, constrain(sat * 0.8, 40, 200) - boardIndex, val - 40), SHORTEST_HUES);
+    //    fill_gradient(ghostLeds, numLeds - numBttmLeds, CHSV(hue, constrain(sat * 1.5, 40, 230), val + 20), numLeds - 1, CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 230) + boardIndex, val + 10), BACKWARD_HUES);
+    fill_gradient(leds, 0, CHSV(hue, constrain(sat * 0.8, 40, 200), constrain(val - 50, 50, 150)), numLeds - numBttmLeds - 1, CHSV(constrain(hue * 0.9, 40, 200) + boardIndex, constrain(sat * 0.8, 40, 200) - boardIndex, constrain(val - 40, 50, 150)), SHORTEST_HUES);
+    fill_gradient(leds, numLeds - numBttmLeds, CHSV(hue, constrain(sat * 1.5, 40, 230), val + 20), numLeds - 1, CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 230) + boardIndex, val + 10), BACKWARD_HUES);
+    //    for (int i = 0; i < numLeds; i++) {
+    //      CRGB intermediate = blend(CRGB(leds[i].r, leds[i].g, leds[i].b), CRGB(ghostLeds[i].r, ghostLeds[i].g, ghostLeds[i].b), 100);
+    //              leds[i].r = dim8_video(intermediate.r);
+    //            leds[i].g = dim8_video(intermediate.g);
+    //            leds[i].b = dim8_video(intermediate.b);
+    //    }
+    //      for (int i = 0; i < numLeds; i++) {
+
+    ////        FastLED.show();
+    //      }
+    //      for (int i = 0; i < numLeds; i++)
+    //      {
+    //        leds[i] = CHSV(hue, sat, val);
+    //        leds[i].r = dim8_video(leds[i].r);
+    //        leds[i].g = dim8_video(leds[i].g);
+    //        leds[i].b = dim8_video(leds[i].b);
+    ////        if (idleAnimationIndex > numLeds - numBttmLeds && idleAnimationIndex < numLeds)
+    ////        {
+    ////          leds[idleAnimationIndex] = CHSV(hue - 29, sat - 11, val);
+    ////
+    //////          leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
+    //////          leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
+    //////          leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
+    ////        } else if (idleAnimationIndex >= 0 && idleAnimationIndex <= numLeds - numBttmLeds)
+    ////        {
+    ////          leds[idleAnimationIndex] = CHSV(hue, sat, val);
+    //////          leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
+    //////          leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
+    //////          leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
+    ////        }
+    ////        else
+    ////        {
+    ////          idleAnimationIndex = numLeds - 1;
+    //////          i = IDLING_LIGHTS_PER_CYCLE;
+    ////          // break;
+    ////        }
+    //
+    ////        leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
+    ////        leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
+    ////        leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
+    ////        FastLED.setBrightness(brightness);
+    ////        FastLED.show();
+    //
+    //        //      FastLED.setBrightness(brightness);
+    ////        sendOSCStream(xy, currentBufferAverage);
+    ////        sendOSCStream(x, currentX);
+    ////        sendOSCStream(y, currentY);
+    //
+    //        //      FastLED.setBrightness(brightness);
+    //        //      FastLED.delay(1);
+    ////        FastLED.delay(1);
+    //      }
+    FastLED.show();
+    //      FastLED.delay(1);
+  }
+
+  //  }
 }
 
 /*
@@ -487,17 +507,17 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
  */
 void sendLocalAddrOSC()
 {
-   char boardIdent[12];
-   sprintf(boardIdent, "%s/my_ip", oscRouteName);
-   OSCMessage msg(boardIdent);
-   IPAddress myIP = Ethernet.localIP();
-   char myIPAddr[16];
-   sprintf(myIPAddr, "%i:%i:%i:%i", myIP[0], myIP[1], myIP[2], myIP[3]);
-   msg.add(myIPAddr);
-   Udp.beginPacket(outAddr, outPort);
-   msg.send(Udp);
-   Udp.endPacket();
-   msg.empty();
+  char boardIdent[12];
+  sprintf(boardIdent, "%s/my_ip", oscRouteName);
+  OSCMessage msg(boardIdent);
+  IPAddress myIP = Ethernet.localIP();
+  char myIPAddr[16];
+  sprintf(myIPAddr, "%i:%i:%i:%i", myIP[0], myIP[1], myIP[2], myIP[3]);
+  msg.add(myIPAddr);
+  Udp.beginPacket(outAddr, outPort);
+  msg.send(Udp);
+  Udp.endPacket();
+  msg.empty();
   // Udp.beginPacket(outDiagAddr, outPort);
   //   msg.send(Udp);
   //   Udp.endPacket();
@@ -675,9 +695,68 @@ void blinkWarningLED()
 /*
  * Get Accelerometer reading
  */
-void pollAccl() {
+void pollAccl()
+{
   sensors_event_t accle, gyros, tempe;
   mpu.getEvent(&accle, &gyros, &tempe);
   accl[0] = accle.acceleration.x;
   accl[1] = accle.acceleration.y;
+
+  // Use a buffer to calculate rolling average for accelerometer readouts
+  rollingAverageBufferX[bufferIndex] = accl[0];
+  rollingAverageBufferY[bufferIndex] = accl[1];
+  if (++bufferIndex >= runningAverageCount)
+    bufferIndex = 0;
+
+  for (int i = 0; i < runningAverageCount; ++i)
+  {
+    rollingAverageAcclX += rollingAverageBufferX[i];
+    rollingAverageAcclY += rollingAverageBufferY[i];
+  }
+  //    DIAG_PRINT("= rollingAverageBufferX: ");
+  //    for (int i = 0; i < runningAverageCount; i++){
+  //      DIAG_PRINT(rollingAverageBufferX[i]);
+  //      DIAG_PRINT(" ");
+  //    }
+  //    DIAG_PRINTLN(" ");
+  rollingAverageAcclX /= (float)runningAverageCount;
+  rollingAverageAcclY /= (float)runningAverageCount;
+  deltaX = accl[0] - rollingAverageAcclX;
+  deltaY = accl[1] - rollingAverageAcclY;
+  //    DIAG_PRINT("- rollingAverageAcclX: ");
+  //    DIAG_PRINT(rollingAverageAcclX);
+  //    DIAG_PRINT(" rollingAverageAcclY: ");
+  //    DIAG_PRINTLN(rollingAverageAcclY);
+  DIAG_PRINT("deltaX: ");
+  DIAG_PRINT(deltaX);
+  DIAG_PRINT(" deltaY: ");
+  DIAG_PRINTLN(deltaY);
+
+  scaledX = constrain(map(rollingAverageAcclX, minAcclX, maxAcclX, 160, 255), 160, 255);
+  scaledY = constrain(map(rollingAverageAcclY, minAcclY, maxAcclY, 160, 255), 160, 255);
+
+#ifdef ENABLE_OSC
+  sendRawAcclOSC(x, accl[0]);
+  sendRawAcclOSC(y, accl[1]);
+  sendOSCStream(x, scaledX);
+  sendOSCStream(y, scaledY);
+  sendOSCStream(xy, (scaledX + scaledY) / 2);
+#endif
+}
+
+void updateIdleHSV()
+{
+  hue = map(scaledX - 30, 130, 225, hue0, hue1) + deltaY * 5 + beatsin8(3, 40, 255) / 20;
+  sat = map(scaledY - 30, 130, 225, sat0, sat1) + deltaX * 5;
+  val = (float)beatsin16(7, 0, 15300) / 256. + 80.;
+  //    val = exp(sin(0.5 * millis() / 2000. * PI) - 0.36787944) * 62.9094299;
+  //    val = map_f((scaledX + scaledY) / 4, 50, 145, val0, val1) + constrain((deltaX + deltaY) * 25, -10, 10) + exp(sin(0.1 * millis() / 2000. * PI) - 0.36787944) * 31.9094299;
+
+  DIAG_PRINT(" HUE ");
+  DIAG_PRINT(hue);
+  DIAG_PRINT(" SAT ");
+  DIAG_PRINT(sat);
+  DIAG_PRINT(" VAL ");
+  DIAG_PRINTLN(val);
+  pollAccl();
 }

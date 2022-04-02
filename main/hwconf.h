@@ -100,12 +100,14 @@ static const float dMaxAcclX = 6.;
 static const float dMinAcclY = -6.;
 static const float dMaxAcclY = 6.;
 
-static const float bumpThreshold = 2.75;
+static const float bumpThreshold = 3.75;
 
 // How many accelerometer readout will be averaged
 static const uint8_t runningAverageCount = 10;
 
 static const uint8_t blendCount = 127;
+
+static const unsigned int animationTimeout = 3000;
 
 // Minimum amount of time between animations
 static const unsigned long minAnimationDuration = 5000;
