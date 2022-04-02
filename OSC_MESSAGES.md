@@ -207,6 +207,6 @@ _Handled by `parseOSCMessage()`._
 
 ## (S, R) `version`
 
-_Handled by `parseOSCMessage()`
+_Handled by `parseOSCMessage()`._
 
 **Receives** request from server and **sends** the internal version of the firmware. This functionality was not implemented prior to 1 April.

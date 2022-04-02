@@ -15,6 +15,9 @@ static const uint8_t numBoards = 18;
 // Total number of LED lights in the lightstrip
 static const uint16_t numLeds = 240;
 
+// Identified as the bottom LEDs
+static const uint16_t numBttmLeds = 40;
+
 // Last three bytes of the serial number of the Arduino board in sequence
 static const uint8_t uniqId[numBoards][3] = {
     {0x17, 0x28, 0x3B},
@@ -97,10 +100,12 @@ static const float dMaxAcclX = 6.;
 static const float dMinAcclY = -6.;
 static const float dMaxAcclY = 6.;
 
-static const float bumpThreshold = 3.5;
+static const float bumpThreshold = 2.75;
 
 // How many accelerometer readout will be averaged
 static const uint8_t runningAverageCount = 10;
+
+static const uint8_t blendCount = 127;
 
 // Minimum amount of time between animations
 static const unsigned long minAnimationDuration = 5000;
