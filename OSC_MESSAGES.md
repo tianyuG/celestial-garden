@@ -14,7 +14,6 @@
   - [(S) `reset_complete`](#s-reset_complete)
   - [(R) `reboot`](#r-reboot)
   - [(R) `ident`](#r-ident)
-  - [(S) `my_ip` [Data]](#s-my_ip-data)
   - [(S, R) `ping`](#s-r-ping)
   - [(S, R) `version`](#s-r-version)
   
@@ -186,18 +185,6 @@ _Handled by `parseOSCMessage()`._
 **WARNING**: `/pod[ID]/ident` is blocking. This means the pod will not function for five seconds (until the identification process is complete).
 
 **Visual Behaviour**: The corresponding pod will blink on and off in magenta every 500 milliseconds for five times so that it can be located.
-
-## (S) `my_ip` [Data]
-
-```
-/pod[ID]/my_ip [Data]
-```
-
-**Currently not implemented.** _Handled by `sendLocalAddrOSC()`._
-
-**Sends** the IP address that is assigned to the Ethernet interface to server. This acts as a safeguard to ensure that the correct IP address has been set, but it can also be timestamped in Max/MSP to act as a notification when the pod comes online.
-
-[Data]: (IPAddress) IP address of the corresponding Arduino board.
 
 ## (S, R) `ping`
 
