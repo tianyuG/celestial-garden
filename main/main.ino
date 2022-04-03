@@ -18,7 +18,7 @@
 #define ENABLE_OTA 1
 
 // Comment out the next line if OSC is not needed (in testing)
-//#define ENABLE_OSC 1
+#define ENABLE_OSC 1
 
 #ifdef DISPLAY_DIAG
 #define DIAG_PRINT(ARG1) Serial.print(ARG1)
@@ -546,10 +546,12 @@ void parseOSCMessage(OSCMessage &msg, int offset)
   }
   else if (msg.fullMatch("/get_hue_0", offset))
   {
+//    DIAG_PRINTLN("HUE0 REQ");
     char boardIdent[24];
     sprintf(boardIdent, "%s/hue_0", oscRouteName);
+//    DIAG_PRINTLN("boardIdent");
     OSCMessage response(boardIdent);
-    response.add(hue0);
+    response.add((int)hue0);
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
@@ -613,32 +615,33 @@ void parseOSCMessage(OSCMessage &msg, int offset)
   else if (msg.fullMatch("/set_hue_0", offset))
   {
     if (msg.isInt(offset + 1))
-      hue0 = msg.getInt();
+      hue0 = msg.getInt(offset + 1);
+//      DIAG_PRINTLN(msg.getInt(offset));
   }
   else if (msg.fullMatch("/set_hue_1", offset))
   {
     if (msg.isInt(offset + 1))
-      hue1 = msg.getInt();
+      hue1 = msg.getInt(offset + 1);
   }
   else if (msg.fullMatch("/set_sat_0", offset))
   {
     if (msg.isInt(offset + 1))
-      sat0 = msg.getInt();
+      sat0 = msg.getInt(offset + 1);
   }
   else if (msg.fullMatch("/set_sat_1", offset))
   {
     if (msg.isInt(offset + 1))
-      sat1 = msg.getInt();
+      sat1 = msg.getInt(offset + 1);
   }
   else if (msg.fullMatch("/set_val_0", offset))
   {
     if (msg.isFloat(offset + 1))
-      val0 = msg.getFloat();
+      val0 = msg.getFloat(offset + 1);
   }
   else if (msg.fullMatch("/set_val_1", offset))
   {
     if (msg.isFloat(offset + 1))
-      val1 = msg.getFloat();
+      val1 = msg.getFloat(offset + 1);
   }
 #endif
 }
