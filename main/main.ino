@@ -36,6 +36,8 @@
 
 FASTLED_USING_NAMESPACE
 
+#define FASTLED_SHOW_CORE 1
+
 // Version of this current script
 const char version[10] = "01APR-01";
 
@@ -48,7 +50,7 @@ const char version[10] = "01APR-01";
 #define LED_3_DATA 15 /*A1*/
 #define LED_3_CLK 16  /*A2*/
 #define LED_TYPE APA102
-#define COLOR_ORDER GRB
+#define COLOR_ORDER BGR
 // Initial brightness of the lightstrip.
 #define INIT_BRIGHTNESS 255
 // How long should the code wait before assuming serial module is initialised (milliseconds)
@@ -118,22 +120,26 @@ uint8_t hue = 0;
 uint8_t sat = 0;
 float val = 191.;
 // Two of the colours to pulse between
-uint8_t hue0 = 0;
-uint8_t sat0 = 0;
+uint8_t hue0 = 20;
+uint8_t sat0 = 20;
 float val0 = 191;
 uint8_t hue1 = 127;
 uint8_t sat1 = 255;
 float val1 = 127;
-uint8_t minHue = 0;
-uint8_t maxHue = 255;
-uint8_t minSat = 0;
-uint8_t maxSat = 255;
-uint8_t minVal = 0;
-uint8_t maxVal = 255;
-uint8_t hueB[blendCount];
-uint8_t satB[blendCount];
-float valB[blendCount];
-CHSV top_start, top_end, bottom_start, bottom_end;
+// Bump HSV
+uint8_t hue_b = 0;
+uint8_t sat_b = 0;
+float val_b = 0.;
+// uint8_t minHue = 0;
+// uint8_t maxHue = 255;
+// uint8_t minSat = 0;
+// uint8_t maxSat = 255;
+// uint8_t minVal = 0;
+// uint8_t maxVal = 255;
+// uint8_t hueB[blendCount];
+// uint8_t satB[blendCount];
+// float valB[blendCount];
+// CHSV top_start, top_end, bottom_start, bottom_end;
 
 // The identification number of the board
 uint8_t boardIndex = 127;
@@ -156,10 +162,10 @@ void setup()
   pinMode(LED_3_DATA, OUTPUT);
   pinMode(LED_3_CLK, OUTPUT);
 
-  FastLED.addLeds<LED_TYPE, LED_0_DATA, LED_0_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE, LED_1_DATA, LED_1_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE, LED_2_DATA, LED_2_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE, LED_3_DATA, LED_3_CLK, COLOR_ORDER>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_0_DATA, LED_0_CLK, COLOR_ORDER, DATA_RATE_MHZ(10)>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_1_DATA, LED_1_CLK, COLOR_ORDER, DATA_RATE_MHZ(10)>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_2_DATA, LED_2_CLK, COLOR_ORDER, DATA_RATE_MHZ(10)>(leds, numLeds).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_3_DATA, LED_3_CLK, COLOR_ORDER, DATA_RATE_MHZ(10)>(leds, numLeds).setCorrection(TypicalLEDStrip);
   currentBlending = LINEARBLEND;
   FastLED.clear();
   FastLED.show();
@@ -224,11 +230,6 @@ void setup()
   DIAG_PRINT("Corresponding IP address is ");
   DIAG_PRINTLN(Ethernet.localIP());
 
-  //#ifdef ENABLE_OSC
-  //  sendLocalAddrOSC();
-  //#endif
-
-  // Udp.begin(outPort);
   if (Udp.begin(outPort))
   {
     DIAG_PRINTLN("Local network setup complete.");
@@ -259,7 +260,7 @@ void setup()
 
 void loop()
 {
-//  EVERY_N_MILLISECONDS(8)
+//  EVERY_N_MILLISECONDS(20)
 //  {
 #ifdef ENABLE_OTA
   ArduinoOTA.poll();
@@ -279,146 +280,80 @@ void loop()
 #endif
 
   pollAccl();
-
-  //    DIAG_PRINT("scaledX: ");
-  //    DIAG_PRINT(scaledX);
-  //    DIAG_PRINT(" scaledY: ");
-  //    DIAG_PRINTLN(scaledY);
+  //        DIAG_PRINT("scaledX: ");
+  //      DIAG_PRINT(scaledX);
+  //      DIAG_PRINT(" scaledY: ");
+  //      DIAG_PRINTLN(scaledY);
   updateIdleHSV();
 
   if (abs(deltaX) + abs(deltaY) > bumpThreshold && millis() - animationTimer > animationTimeout)
   {
+    pollAccl();
+    isInAnimation = true;
     for (int i = numLeds; i > 4; --i)
     {
-      // TODO: Implement bump colour
       for (int j = 0; j < 6; j++)
       {
+        updateBumpHSV();
         if (i > 0)
         {
-          leds[j == 5 ? i : i--] = CRGB(50, 0, 50);
-          pollAccl();
+          DIAG_PRINT(" hue_b ");
+          DIAG_PRINT(hue_b);
+          DIAG_PRINT(" sat_b ");
+          DIAG_PRINT(sat_b);
+          DIAG_PRINT(" val_b ");
+          DIAG_PRINTLN(val_b);
+          leds[j == 5 ? i : i--] = CHSV(hue_b, sat_b, val_b);
         }
-        //        leds[i] = CRGB(50, 0, 50);
       }
 
-      //      leds[i--] = CRGB(50, 0, 50);
-      //      pollAccl();
-      //      leds[i--] = CRGB(50, 0, 50);
-      //      pollAccl();
-      //      leds[i--] = CRGB(50, 0, 50);
-      //      pollAccl();
-      //      leds[i--] = CRGB(50, 0, 50);
-      //      pollAccl();
-      //      leds[i] = CRGB(50, 0, 50);
-      //      pollAccl();
       FastLED.show();
     }
-    //    uint8_t currBrightness = FastLED.getBrightness() / ceil(numLeds / 5);
     for (int i = 0; i < numLeds - 4; i++)
     {
       for (int j = 0; j < 6; j++)
       {
+        pollAccl();
+        updateIdleHSV();
         if (i > 0)
         {
-          updateIdleHSV();
-          leds[j == 5 ? i : i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
+          if (i > numLeds - numBttmLeds && i < numLeds - 1)
+          {
+            leds[i] = getBlendedHSV(CHSV(hue, constrain(sat * 0.8, 80, 225), constrain(val - 50, 50, 150)), CHSV(constrain(hue * 1.1, 80, 220), constrain(sat * 0.8, 40, 200), constrain(val - 40, 50, 150)), j == 5 ? i : i++);
+          }
+          else
+          {
+            leds[i] = getBlendedHSV(CHSV(hue, constrain(sat * 1.5, 40, 200), val + 20), CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 200) + boardIndex, val + 10), j == 5 ? i : i++);
+          }
+          //          leds[j == 5 ? i : i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
         }
       }
 
-      //      updateIdleHSV();
-      //      leds[i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
-      //      updateIdleHSV();
-      //      leds[i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
-      //      updateIdleHSV();
-      //      leds[i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
-      //      updateIdleHSV();
-      //      leds[i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
-      //      updateIdleHSV();
-      //      leds[i] = CHSV(hue, constrain(sat * 0.8, 40, 200), val - 50);
-      //      FastLED.setBrightness(constrain(FastLED.getBrightness() - currBrightness, 0, 255));
       FastLED.show();
     }
-    needsFadeIn = true;
-
-    //    for (int i = 0; i < numLeds; i++){
-    //      leds[i].r = dim8_video(leds[i].r);
-    //      leds[i].g = dim8_video(leds[i].g);
-    //      leds[i].b = dim8_video(leds[i].b);
-    //      FastLED.show();
-    //    }
+    animationTimer = millis();
+    isInAnimation = false;
   }
   if (!isInAnimation)
   {
-    //    if (needsFadeIn) {
-    //      needsFadeIn = false;
-    //      fill_gradient(leds, 0, CHSV(hue, constrain(sat * 0.8, 40, 200), 0), numLeds - numBttmLeds - 1, CHSV(constrain(hue * 0.9, 40, 200) + boardIndex, constrain(sat * 0.8, 40, 200) - boardIndex, 0), SHORTEST_HUES);
-    //    fill_gradient(leds, numLeds - numBttmLeds, CHSV(hue, constrain(sat * 1.5, 40, 230), 0), numLeds - 1, CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 230) + boardIndex, 00), BACKWARD_HUES);
-    //      for (int i = 0; i < val; i++) {
-    //        FastLED.setBrightness(i);
-    //        FastLED.show();
-    //      }
-    //    }
-    //    fill_gradient(ghostLeds, 0, CHSV(hue, constrain(sat * 0.8, 40, 200), val - 50), numLeds - numBttmLeds - 1, CHSV(constrain(hue * 0.9, 40, 200) + boardIndex, constrain(sat * 0.8, 40, 200) - boardIndex, val - 40), SHORTEST_HUES);
-    //    fill_gradient(ghostLeds, numLeds - numBttmLeds, CHSV(hue, constrain(sat * 1.5, 40, 230), val + 20), numLeds - 1, CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 230) + boardIndex, val + 10), BACKWARD_HUES);
-    fill_gradient(leds, 0, CHSV(hue, constrain(sat * 0.8, 40, 200), constrain(val - 50, 50, 150)), numLeds - numBttmLeds - 1, CHSV(constrain(hue * 0.9, 40, 200) + boardIndex, constrain(sat * 0.8, 40, 200) - boardIndex, constrain(val - 40, 50, 150)), SHORTEST_HUES);
-    fill_gradient(leds, numLeds - numBttmLeds, CHSV(hue, constrain(sat * 1.5, 40, 230), val + 20), numLeds - 1, CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 230) + boardIndex, val + 10), BACKWARD_HUES);
-    //    for (int i = 0; i < numLeds; i++) {
-    //      CRGB intermediate = blend(CRGB(leds[i].r, leds[i].g, leds[i].b), CRGB(ghostLeds[i].r, ghostLeds[i].g, ghostLeds[i].b), 100);
-    //              leds[i].r = dim8_video(intermediate.r);
-    //            leds[i].g = dim8_video(intermediate.g);
-    //            leds[i].b = dim8_video(intermediate.b);
-    //    }
-    //      for (int i = 0; i < numLeds; i++) {
-
-    ////        FastLED.show();
-    //      }
-    //      for (int i = 0; i < numLeds; i++)
-    //      {
-    //        leds[i] = CHSV(hue, sat, val);
-    //        leds[i].r = dim8_video(leds[i].r);
-    //        leds[i].g = dim8_video(leds[i].g);
-    //        leds[i].b = dim8_video(leds[i].b);
-    ////        if (idleAnimationIndex > numLeds - numBttmLeds && idleAnimationIndex < numLeds)
-    ////        {
-    ////          leds[idleAnimationIndex] = CHSV(hue - 29, sat - 11, val);
-    ////
-    //////          leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
-    //////          leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
-    //////          leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
-    ////        } else if (idleAnimationIndex >= 0 && idleAnimationIndex <= numLeds - numBttmLeds)
-    ////        {
-    ////          leds[idleAnimationIndex] = CHSV(hue, sat, val);
-    //////          leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
-    //////          leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
-    //////          leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
-    ////        }
-    ////        else
-    ////        {
-    ////          idleAnimationIndex = numLeds - 1;
-    //////          i = IDLING_LIGHTS_PER_CYCLE;
-    ////          // break;
-    ////        }
-    //
-    ////        leds[idleAnimationIndex].r = dim8_video(leds[idleAnimationIndex].r);
-    ////        leds[idleAnimationIndex].g = dim8_video(leds[idleAnimationIndex].g);
-    ////        leds[idleAnimationIndex].b = dim8_video(leds[idleAnimationIndex--].b);
-    ////        FastLED.setBrightness(brightness);
-    ////        FastLED.show();
-    //
-    //        //      FastLED.setBrightness(brightness);
-    ////        sendOSCStream(xy, currentBufferAverage);
-    ////        sendOSCStream(x, currentX);
-    ////        sendOSCStream(y, currentY);
-    //
-    //        //      FastLED.setBrightness(brightness);
-    //        //      FastLED.delay(1);
-    ////        FastLED.delay(1);
-    //      }
+    pollAccl();
+    updateIdleHSV();
+    for (int i = numLeds - 1; i >= numLeds - numBttmLeds; i--)
+    {
+      leds[i] = getBlendedHSV(CHSV(abs((uint8_t)~hue - 60), sat, val), CHSV(abs((uint8_t)~hue - 50), sat, val), i);
+    }
+    for (int i = numLeds - numBttmLeds - 1; i >= 0; i--)
+    {
+      leds[i] = getBlendedHSV(CHSV(hue, constrain(sat * 1.2, 40, 180), val * 0.8), CHSV(hue - boardIndex, constrain(sat * 1.25, 40, 180) + boardIndex, val * 0.9), i);
+    }
     FastLED.show();
-    //      FastLED.delay(1);
-  }
 
-  //  }
+    //    fill_gradient(leds, 0, CHSV(hue, constrain(sat * 0.8, 40, 200), constrain(val - 50, 50, 150)), numLeds - numBttmLeds - 1, CHSV(constrain(hue * 0.9, 40, 200) + boardIndex, constrain(sat * 0.8, 40, 200) - boardIndex, constrain(val - 40, 50, 150)), SHORTEST_HUES);
+    //    fill_gradient(leds, numLeds - numBttmLeds, CHSV(hue, constrain(sat * 1.5, 40, 230), val + 20), numLeds - 1, CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 230) + boardIndex, val + 10), BACKWARD_HUES);
+
+    FastLED.show();
+  }
+  //}
 }
 
 /*
@@ -462,11 +397,7 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal)
   Udp.beginPacket(outAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
-  //  msg.empty();
-  // Udp.beginPacket(outDiagAddr, outPort);
-  // msg.send(Udp);
-  // Udp.endPacket();
-  // msg.empty();
+  msg.empty();
 #endif
 }
 
@@ -494,34 +425,8 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
   Udp.beginPacket(outAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
-  // msg.empty();
-  // Udp.beginPacket(outDiagAddr, outPort);
-  // msg.send(Udp);
-  // Udp.endPacket();
-  // msg.empty();
-#endif
-}
-
-/*
- * Function to send local IP address to server over OSC
- */
-void sendLocalAddrOSC()
-{
-  char boardIdent[12];
-  sprintf(boardIdent, "%s/my_ip", oscRouteName);
-  OSCMessage msg(boardIdent);
-  IPAddress myIP = Ethernet.localIP();
-  char myIPAddr[16];
-  sprintf(myIPAddr, "%i:%i:%i:%i", myIP[0], myIP[1], myIP[2], myIP[3]);
-  msg.add(myIPAddr);
-  Udp.beginPacket(outAddr, outPort);
-  msg.send(Udp);
-  Udp.endPacket();
   msg.empty();
-  // Udp.beginPacket(outDiagAddr, outPort);
-  //   msg.send(Udp);
-  //   Udp.endPacket();
-  //   msg.empty();
+#endif
 }
 
 void sendAnyOSC(String msgBody)
@@ -534,11 +439,7 @@ void sendAnyOSC(String msgBody)
   Udp.beginPacket(outAddr, outPort);
   msg.send(Udp);
   Udp.endPacket();
-  // msg.empty();
-  // Udp.beginPacket(outDiagAddr, outPort);
-  // msg.send(Udp);
-  // Udp.endPacket();
-  // msg.empty();
+  msg.empty();
 #endif
 }
 
@@ -578,12 +479,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
-    // response.empty();
-    // Udp.beginPacket(outDiagAddr, outPort);
-    // response.send(Udp);
-    // Udp.endPacket();
-    // response.empty();
-    // delay(500);
+    response.empty();
   }
   else if (msg.fullMatch("/ident", offset))
   {
@@ -615,11 +511,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
-    // response.empty();
-    // Udp.beginPacket(outDiagAddr, outPort);
-    // response.send(Udp);
-    // Udp.endPacket();
-    // response.empty();
+    response.empty();
   }
   else if (msg.fullMatch("/calibrate", offset))
   {
@@ -653,11 +545,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
-    // response.empty();
-    // Udp.beginPacket(outDiagAddr, outPort);
-    // response.send(Udp);
-    // Udp.endPacket();
-    // response.empty();
+    response.empty();
   }
   else if (msg.fullMatch("/version", offset))
   {
@@ -668,11 +556,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
-    // response.empty();
-    // Udp.beginPacket(outDiagAddr, outPort);
-    // response.send(Udp);
-    // Udp.endPacket();
-    // response.empty();
+    response.empty();
   }
 #endif
 }
@@ -727,10 +611,10 @@ void pollAccl()
   //    DIAG_PRINT(rollingAverageAcclX);
   //    DIAG_PRINT(" rollingAverageAcclY: ");
   //    DIAG_PRINTLN(rollingAverageAcclY);
-  DIAG_PRINT("deltaX: ");
-  DIAG_PRINT(deltaX);
-  DIAG_PRINT(" deltaY: ");
-  DIAG_PRINTLN(deltaY);
+  //  DIAG_PRINT("deltaX: ");
+  //  DIAG_PRINT(deltaX);
+  //  DIAG_PRINT(" deltaY: ");
+  //  DIAG_PRINTLN(deltaY);
 
   scaledX = constrain(map(rollingAverageAcclX, minAcclX, maxAcclX, 160, 255), 160, 255);
   scaledY = constrain(map(rollingAverageAcclY, minAcclY, maxAcclY, 160, 255), 160, 255);
@@ -746,17 +630,45 @@ void pollAccl()
 
 void updateIdleHSV()
 {
-  hue = map(scaledX - 30, 130, 225, hue0, hue1) + deltaY * 5 + beatsin8(3, 40, 255) / 20;
-  sat = map(scaledY - 30, 130, 225, sat0, sat1) + deltaX * 5;
-  val = (float)beatsin16(7, 0, 15300) / 256. + 80.;
-  //    val = exp(sin(0.5 * millis() / 2000. * PI) - 0.36787944) * 62.9094299;
-  //    val = map_f((scaledX + scaledY) / 4, 50, 145, val0, val1) + constrain((deltaX + deltaY) * 25, -10, 10) + exp(sin(0.1 * millis() / 2000. * PI) - 0.36787944) * 31.9094299;
+  unsigned long timeVariation = ((millis() / 250) + 22) % 23;
+  uint16_t boardVariation = (boardIndex * 27) % 21;
+  hue = beatsin8(2, 30, 120) + boardVariation + map(scaledY - 30, 160, 255, hue0, hue1);
+  sat = beatsin8(3, 20, 120) - boardVariation + map(scaledX - 30, 160, 255, hue0, hue1);
+  val = (float)beatsin16(2, 0, 15300) / 256. + 80.;
+  // val = 200;
 
-  DIAG_PRINT(" HUE ");
-  DIAG_PRINT(hue);
-  DIAG_PRINT(" SAT ");
-  DIAG_PRINT(sat);
-  DIAG_PRINT(" VAL ");
-  DIAG_PRINTLN(val);
-  pollAccl();
+  //   DIAG_PRINT(" HUE ");
+  //   DIAG_PRINT(hue);
+  //   DIAG_PRINT(" SAT ");
+  //   DIAG_PRINT(sat);
+  //   DIAG_PRINT(" VAL ");
+  //   DIAG_PRINTLN(val);
+}
+
+void updateBumpHSV()
+{
+  hue_b = constrain((uint8_t)(140 | (uint8_t)~hue) + deltaY * 10, 80, 200) + (millis() / 500) % 23;
+  sat_b = constrain((uint8_t)(110 | (uint8_t)~sat) + deltaX * 10, 80, 200) + (millis() / 500) % 19;
+  val_b = (float)beatsin16(2, 0, 15300) / 256. + 80.;
+  // val_b = 200;
+
+  //  DIAG_PRINT(" HUE_b ");
+  //  DIAG_PRINT(hue);
+  //  DIAG_PRINT(" SAT_b ");
+  //  DIAG_PRINT(sat);
+  //  DIAG_PRINT(" VAL_b ");
+  //  DIAG_PRINTLN(val);
+}
+
+CHSV getBlendedHSV(CHSV startC, CHSV endC, int index)
+{
+  CHSV ret = blend(startC, endC, (float)index * 255. / (float)(numLeds - 1));
+  //     DIAG_PRINT(" HUE ");
+  //   DIAG_PRINT(ret.hue);
+  //   DIAG_PRINT(" SAT ");
+  //   DIAG_PRINT(ret.sat);
+  //   DIAG_PRINT(" VAL ");
+  //   DIAG_PRINTLN(ret.val);
+
+  return ret;
 }

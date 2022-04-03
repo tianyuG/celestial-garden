@@ -2,6 +2,7 @@
 
 - [Known Issues](#known-issues)
   - [Won't Fix/Can't Fix](#wont-fixcant-fix)
+    - [Lightstrip flickers](#lightstrip-flickers)
   - [Investigating](#investigating)
     - [Bump animation uses static colour](#bump-animation-uses-static-colour)
     - [Bump animation and idle animation does not transition well](#bump-animation-and-idle-animation-does-not-transition-well)
@@ -13,7 +14,34 @@
 
 ## Won't Fix/Can't Fix
 
-None currently.
+### Lightstrip flickers
+
+This is a known issue with this (APA102) particular LED when changing brightness. Can't get it fixed.
+
+**Interim solution**: Make the brightness change really slow (twice a minute, as opposed to 7 to simulate meditation breathing).
+
+See:
+
+- [Functional Uncontrollable RGB LED Strip](https://forums.adafruit.com/viewtopic.php?f=8&t=133962)
+
+- [Why APA102 LEDs Have Trouble At 24 MHz](https://www.pjrc.com/why-apa102-leds-have-trouble-at-24-mhz/)
+
+- [APA102 LED panels have flicker problem](https://forums.adafruit.com/viewtopic.php?f=47&p=874973)
+
+- [Flicker](https://github.com/jasoncoon/esp32-fastled-webserver/issues/8)
+  > Soooooo all that I needed to do was change the FASTLED_SHOW_CORE to 1 instead of 0 and there is no longer any flicker at all. I have no idea why this would be the case but props to u/Jem_Spencer for the fix! Maybe change this in your code?
+  
+  Tried and that didn't help.
+
+- [APA102 aka “Superled”](https://cpldcpu.wordpress.com/2014/08/27/apa102/)
+
+  > One interesting addition is the “global” field for each LED, which allows to control the brightness of the LED in 32 steps from 0 to 31. [...] Interestingly, the APA102 started to flicker once I set the global brightness to 30 or below.
+
+- [Frequently Asked Questions](https://github.com/FastLED/FastLED/wiki/Frequently-Asked-Questions)
+
+  > APA102 leds allow for high data rates. I've driven them at 24Mhz+ for nearly 1000 leds. However, for some reason, some ways of manufacturing APA102 strips have problems with high data rates when the strip is long. If this happens, you can try slowing down the data rate that FastLED uses to write out APA102 data. Often, setting it to 12Mhz or 10Mhz works[...]
+
+  Tried both 12Mhz and 10 Mhz and that didn't help.
 
 ## Investigating
 
@@ -24,6 +52,8 @@ Working on a function to change bump animation colour
 ### Bump animation and idle animation does not transition well
 
 Currently idle animation uses `fill_gradient()` which makes it near impossible to transition from bump animation (`fill_gradient()` changes the lightstrip instantly, which is difficult to blend as it needs to be able to know the colour it is transition to -- trust me I tried). Planning to change `fill_gradient()` to `fill_solid()`.
+
+
 
 ## Fixed
 
