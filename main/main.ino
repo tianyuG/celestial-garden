@@ -429,20 +429,6 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
 #endif
 }
 
-void sendAnyOSC(String msgBody)
-{
-#ifdef ENABLE_OSC
-  char boardIdent[12];
-  sprintf(boardIdent, "%s/any", oscRouteName);
-  OSCMessage msg(boardIdent);
-  msg.add(msgBody);
-  Udp.beginPacket(outAddr, outPort);
-  msg.send(Udp);
-  Udp.endPacket();
-  msg.empty();
-#endif
-}
-
 /*
  * Function to parse OSC message that is sent to Arduino.
  * See `../OSC_MESSAGES.md` for documentation (sections that starts with '(R)').
@@ -557,6 +543,102 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     response.send(Udp);
     Udp.endPacket();
     response.empty();
+  }
+  else if (msg.fullMatch("/get_hue_0", offset))
+  {
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/hue_0", oscRouteName);
+    OSCMessage response(boardIdent);
+    response.add(hue0);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
+  }
+  else if (msg.fullMatch("/get_hue_1", offset))
+  {
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/hue_1", oscRouteName);
+    OSCMessage response(boardIdent);
+    response.add(hue1);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
+  }
+  else if (msg.fullMatch("/get_sat_0", offset))
+  {
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/sat_0", oscRouteName);
+    OSCMessage response(boardIdent);
+    response.add(sat0);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
+  }
+  else if (msg.fullMatch("/get_sat_1", offset))
+  {
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/sat_1", oscRouteName);
+    OSCMessage response(boardIdent);
+    response.add(sat1);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
+  }
+  else if (msg.fullMatch("/get_val_0", offset))
+  {
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/val_0", oscRouteName);
+    OSCMessage response(boardIdent);
+    response.add(val0);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
+  }
+  else if (msg.fullMatch("/get_val_1", offset))
+  {
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/val_1", oscRouteName);
+    OSCMessage response(boardIdent);
+    response.add(val1);
+    Udp.beginPacket(outAddr, outPort);
+    response.send(Udp);
+    Udp.endPacket();
+    response.empty();
+  }
+  else if (msg.fullMatch("/set_hue_0", offset))
+  {
+    if (msg.isInt(offset + 1))
+      hue0 = msg.getInt();
+  }
+  else if (msg.fullMatch("/set_hue_1", offset))
+  {
+    if (msg.isInt(offset + 1))
+      hue1 = msg.getInt();
+  }
+  else if (msg.fullMatch("/set_sat_0", offset))
+  {
+    if (msg.isInt(offset + 1))
+      sat0 = msg.getInt();
+  }
+  else if (msg.fullMatch("/set_sat_1", offset))
+  {
+    if (msg.isInt(offset + 1))
+      sat1 = msg.getInt();
+  }
+  else if (msg.fullMatch("/set_val_0", offset))
+  {
+    if (msg.isFloat(offset + 1))
+      val0 = msg.getFloat();
+  }
+  else if (msg.fullMatch("/set_val_1", offset))
+  {
+    if (msg.isFloat(offset + 1))
+      val1 = msg.getFloat();
   }
 #endif
 }
