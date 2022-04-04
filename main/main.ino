@@ -104,7 +104,7 @@ float accl[2];
 float rollingAverageAcclX = 0;
 float rollingAverageAcclY = 0;
 // bool needsFadeIn = false;
-uint16_t boardVariation = (boardIndex * 27) % 21;
+uint16_t boardVariation = 0;
 uint8_t subtleBoardVariation = 0;
 
 // CRGBArray<numLeds> leds;
@@ -195,6 +195,8 @@ void setup()
     if (matched)
     {
       boardIndex = i;
+      boardVariation = (boardIndex * 27) % 21;
+      subtleBoardVariation = (boardIndex % 7 + 1) * 2;
       DIAG_PRINT("Board matched at index ");
       DIAG_PRINTLN(boardIndex);
       sprintf(oscRouteName, "/pod%02d", boardIndex + 1);
@@ -321,11 +323,13 @@ void loop()
         {
           if (i > numLeds - numBttmLeds && i < numLeds - 1)
           {
-            leds[i] = getBlendedHSV(CHSV(hue, constrain(sat * 0.8, 80, 225), constrain(val - 50, 50, 150)), CHSV(constrain(hue * 1.1, 80, 220), constrain(sat * 0.8, 40, 200), constrain(val - 40, 50, 150)), j == 5 ? i : i++);
+            leds[i] = getBlendedHSV(CHSV(abs((uint8_t)~hue - 60), sat, val), CHSV(abs((uint8_t)~hue - 50), sat, val), j == 5 ? i : i++);
+//            leds[i] = getBlendedHSV(CHSV(hue, constrain(sat * 0.8, 80, 225), constrain(val - 50, 50, 150)), CHSV(constrain(hue * 1.1, 80, 220), constrain(sat * 0.8, 40, 200), constrain(val - 40, 50, 150)), j == 5 ? i : i++);
           }
           else
           {
-            leds[i] = getBlendedHSV(CHSV(hue, constrain(sat * 1.5, 40, 200), val + 20), CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 200) + boardIndex, val + 10), j == 5 ? i : i++);
+            leds[i] = getBlendedHSV(CHSV(hue, constrain(sat * 1.2, 60, 220), val * 0.9), CHSV(hue - boardIndex, constrain(sat * 1.25, 60, 240) + boardIndex, val), j == 5 ? i : i++);
+//            leds[i] = getBlendedHSV(CHSV(hue, constrain(sat * 1.5, 40, 200), val + 20), CHSV(hue - boardIndex, constrain(sat * 1.5, 40, 200) + boardIndex, val + 10), j == 5 ? i : i++);
           }
           //          leds[j == 5 ? i : i++] = CHSV(hue, constrain(sat * 0.8, 40, 200), i > numLeds - numBttmLeds ? val : val - 50);
         }
@@ -726,10 +730,9 @@ void pollAccl()
 void updateIdleHSV()
 {
   unsigned long timeVariation = ((millis() / 250) + 22) % 23;
-  subtleBoardVariation = (boardIndex % 7 + 1) * 2;
   hue = beatsin8(2, 30, 120) + boardVariation + map(scaledY - 30, 160, 255, hue0, hue1 + subtleBoardVariation);
   sat = beatsin8(3, 20, 120) - boardVariation + map(scaledX - 30, 160, 255, sat0, sat1);
-  val = (float)beatsin16(2, 0, 15300) / 256. + 80.;
+  val = (float)beatsin16(2, 15300, 38250) / 255. + 80.;
   // val = 200;
 
   //   DIAG_PRINT(" HUE ");
@@ -742,17 +745,17 @@ void updateIdleHSV()
 
 void updateBumpHSV()
 {
-  hue_b = constrain((uint8_t)(140 | (uint8_t)~hue) + deltaY * 10, 80, 200) + (millis() / 500) % 23;
-  sat_b = constrain((uint8_t)(110 | (uint8_t)~sat) + deltaX * 10, 80, 200) + (millis() / 500) % 19;
-  val_b = (float)beatsin16(2, 0, 15300) / 256. + 80.;
+  hue_b = constrain((uint8_t)((140 - subtleBoardVariation) | (uint8_t)~hue), 80, 220) + (millis() / 250) % 21 + deltaY * 10;
+  sat_b = constrain((uint8_t)(80 + boardVariation | (uint8_t)~sat), 80, 220) + (millis() / 250) % 19 + deltaX * 10;
+  val_b = (float)beatsin16(2, 15300, 43350) / 255. + 80.;
   // val_b = 200;
 
-  //  DIAG_PRINT(" HUE_b ");
-  //  DIAG_PRINT(hue);
-  //  DIAG_PRINT(" SAT_b ");
-  //  DIAG_PRINT(sat);
-  //  DIAG_PRINT(" VAL_b ");
-  //  DIAG_PRINTLN(val);
+    DIAG_PRINT(" HUE_b ");
+    DIAG_PRINT(hue_b);
+    DIAG_PRINT(" SAT_b ");
+    DIAG_PRINT(sat_b);
+    DIAG_PRINT(" VAL_b ");
+    DIAG_PRINTLN(val_b);
 }
 
 CHSV getBlendedHSV(CHSV startC, CHSV endC, int index)
