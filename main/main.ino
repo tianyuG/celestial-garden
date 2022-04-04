@@ -551,6 +551,8 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     sprintf(boardIdent, "%s/hue_0", oscRouteName);
 //    DIAG_PRINTLN("boardIdent");
     OSCMessage response(boardIdent);
+    DIAG_PRINT(">>>>>>>>HUE0: ");
+    DIAG_PRINTLN(hue0);
     response.add((int)hue0);
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);

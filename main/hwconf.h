@@ -100,7 +100,7 @@ static const float dMaxAcclX = 6.;
 static const float dMinAcclY = -6.;
 static const float dMaxAcclY = 6.;
 
-static const float bumpThreshold = 3.75;
+static const float bumpThreshold = 2.75;
 
 // How many accelerometer readout will be averaged
 static const uint8_t runningAverageCount = 10;
