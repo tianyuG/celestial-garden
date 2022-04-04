@@ -39,7 +39,7 @@ FASTLED_USING_NAMESPACE
 #define FASTLED_SHOW_CORE 1
 
 // Version of this current script
-const char version[10] = "01APR-01";
+const char version[10] = "04APR-01";
 
 #define LED_0_DATA 5
 #define LED_0_CLK 3
@@ -88,7 +88,7 @@ int idleAnimationIndex = numLeds - 1;
 bool isInAnimation = false;
 float brightness = INIT_BRIGHTNESS;
 // Name used by OSC to route message
-char oscRouteName[6];
+char oscRouteName[8];
 // Maximum and minimum values from the accelerometer in x- and y-axis
 float minAcclX = dMinAcclX;
 float maxAcclX = dMaxAcclX;
@@ -106,6 +106,8 @@ float rollingAverageAcclY = 0;
 // bool needsFadeIn = false;
 uint16_t boardVariation = 0;
 uint8_t subtleBoardVariation = 0;
+
+OSCBundle msgOut ;
 
 // CRGBArray<numLeds> leds;
 CRGB leds[numLeds];
@@ -277,8 +279,10 @@ void loop()
     while (msgSize--)
     {
       msgIn.fill(Udp.read());
-      if (!msgIn.hasError())
+      if (!msgIn.hasError()) {
+      DIAG_PRINT(oscRouteName);
         msgIn.route(oscRouteName, parseOSCMessage);
+      }
     }
   }
 #endif
@@ -292,21 +296,24 @@ void loop()
 
   if (abs(deltaX) + abs(deltaY) > bumpThreshold && millis() - animationTimer > animationTimeout)
   {
-    pollAccl();
+//    pollAccl();
     isInAnimation = true;
+    sendOSCStream(bump, 1);
     for (int i = numLeds; i > 4; --i)
     {
+//      pollAccl();
       for (int j = 0; j < 6; j++)
       {
+        pollAccl();
         updateBumpHSV();
         if (i > 0)
         {
-          DIAG_PRINT(" hue_b ");
-          DIAG_PRINT(hue_b);
-          DIAG_PRINT(" sat_b ");
-          DIAG_PRINT(sat_b);
-          DIAG_PRINT(" val_b ");
-          DIAG_PRINTLN(val_b);
+//          DIAG_PRINT(" hue_b ");
+//          DIAG_PRINT(hue_b);
+//          DIAG_PRINT(" sat_b ");
+//          DIAG_PRINT(sat_b);
+//          DIAG_PRINT(" val_b ");
+//          DIAG_PRINTLN(val_b);
           leds[j == 5 ? i : i--] = CHSV(hue_b, sat_b, val_b);
         }
       }
@@ -315,6 +322,7 @@ void loop()
     }
     for (int i = 0; i < numLeds - 4; i++)
     {
+//      pollAccl();
       for (int j = 0; j < 6; j++)
       {
         pollAccl();
@@ -385,11 +393,13 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal)
     break;
   case (bump):
     sprintf(boardIdent, "%s/xy", oscRouteName);
+//      DIAG_PRINT(boardIdent);
+//  DIAG_PRINTLN("  bang");
     break;
   }
-  DIAG_PRINT(boardIdent);
-  DIAG_PRINT(" ");
-  DIAG_PRINTLN(currentVal);
+//  DIAG_PRINT(boardIdent);
+//  DIAG_PRINT(" ");
+//  DIAG_PRINTLN(currentVal);
 
   OSCMessage msg(boardIdent);
   if (cmd == bump)
@@ -442,10 +452,11 @@ void sendRawAcclOSC(osc_cmds cmd, float currentVal)
 void parseOSCMessage(OSCMessage &msg, int offset)
 {
 #ifdef ENABLE_OSC
-  if (msg.fullMatch("/reboot", offset))
+  OSCBundle response;
+  if (msg.match("/reboot", offset))
   {
-    for (int i = 0; i < 3; i++)
-    {
+    // for (int i = 0; i < 3; i++)
+    // {
       FastLED.setBrightness(127);
       fill_solid(leds, numLeds, CRGB(0, 255, 0));
       FastLED.show();
@@ -453,10 +464,10 @@ void parseOSCMessage(OSCMessage &msg, int offset)
       FastLED.clear();
       FastLED.show();
       delay(500);
-    }
+    // }
     NVIC_SystemReset();
   }
-  else if (msg.fullMatch("/reset_calibration", offset))
+  else if (msg.match("/reset_calibration", offset))
   {
     char boardIdent[24];
     FastLED.clear();
@@ -467,13 +478,14 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     maxAcclY = dMaxAcclY;
 
     sprintf(boardIdent, "%s/reset_complete", oscRouteName);
-    OSCMessage response(boardIdent);
+    // OSCMessage response(boardIdent);
+
     Udp.beginPacket(outAddr, outPort);
     response.send(Udp);
     Udp.endPacket();
     response.empty();
   }
-  else if (msg.fullMatch("/ident", offset))
+  else if (msg.match("/ident", offset))
   {
     DIAG_PRINTLN("OSC-IDENT received");
     FastLED.setBrightness(191);
@@ -488,7 +500,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
       DIAG_PRINTLN("OSC-IDENT looped");
     }
   }
-  else if (msg.fullMatch("/get_accl_range", offset))
+  else if (msg.match("/get_accl_range", offset))
   {
     OSCBundle response;
     char boardIdentMinX[24], boardIdentMaxX[24], boardIdentMinY[24], boardIdentMaxY[24];
@@ -505,7 +517,7 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     Udp.endPacket();
     response.empty();
   }
-  else if (msg.fullMatch("/calibrate", offset))
+  else if (msg.match("/calibrate", offset))
   {
     unsigned long startTime = millis();
     FastLED.setBrightness(127);
@@ -529,17 +541,17 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     FastLED.show();
     delay(1000);
   }
-  else if (msg.fullMatch("/ping", offset))
-  {
-    char boardIdent[12];
-    sprintf(boardIdent, "%s/ping", oscRouteName);
-    OSCMessage response(boardIdent);
-    Udp.beginPacket(outAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
-  }
-  else if (msg.fullMatch("/version", offset))
+//  else if (msg.match("/ping", offset))
+//  {
+//    char boardIdent[12];
+//    sprintf(boardIdent, "%s/ping", oscRouteName);
+//    OSCMessage response(boardIdent);
+//    Udp.beginPacket(outAddr, outPort);
+//    response.send(Udp);
+//    Udp.endPacket();
+//    response.empty();
+//  }
+  else if (msg.match("/version", offset))
   {
     char boardIdent[24];
     sprintf(boardIdent, "%s/version", oscRouteName);
@@ -550,107 +562,107 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     Udp.endPacket();
     response.empty();
   }
-  else if (msg.fullMatch("/get_hue_0", offset))
-  {
-//    DIAG_PRINTLN("HUE0 REQ");
-    char boardIdent[24];
-    sprintf(boardIdent, "%s/hue_0", oscRouteName);
-//    DIAG_PRINTLN("boardIdent");
-    OSCMessage response(boardIdent);
-    DIAG_PRINT(">>>>>>>>HUE0: ");
-    DIAG_PRINTLN(hue0);
-    response.add((int)hue0);
-    Udp.beginPacket(outAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
-  }
-  else if (msg.fullMatch("/get_hue_1", offset))
-  {
-    char boardIdent[24];
-    sprintf(boardIdent, "%s/hue_1", oscRouteName);
-    OSCMessage response(boardIdent);
-    response.add(hue1);
-    Udp.beginPacket(outAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
-  }
-  else if (msg.fullMatch("/get_sat_0", offset))
-  {
-    char boardIdent[24];
-    sprintf(boardIdent, "%s/sat_0", oscRouteName);
-    OSCMessage response(boardIdent);
-    response.add(sat0);
-    Udp.beginPacket(outAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
-  }
-  else if (msg.fullMatch("/get_sat_1", offset))
-  {
-    char boardIdent[24];
-    sprintf(boardIdent, "%s/sat_1", oscRouteName);
-    OSCMessage response(boardIdent);
-    response.add(sat1);
-    Udp.beginPacket(outAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
-  }
-  else if (msg.fullMatch("/get_val_0", offset))
-  {
-    char boardIdent[24];
-    sprintf(boardIdent, "%s/val_0", oscRouteName);
-    OSCMessage response(boardIdent);
-    response.add(val0);
-    Udp.beginPacket(outAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
-  }
-  else if (msg.fullMatch("/get_val_1", offset))
-  {
-    char boardIdent[24];
-    sprintf(boardIdent, "%s/val_1", oscRouteName);
-    OSCMessage response(boardIdent);
-    response.add(val1);
-    Udp.beginPacket(outAddr, outPort);
-    response.send(Udp);
-    Udp.endPacket();
-    response.empty();
-  }
-  else if (msg.fullMatch("/set_hue_0", offset))
-  {
-    if (msg.isInt(offset + 1))
-      hue0 = msg.getInt(offset + 1);
-//      DIAG_PRINTLN(msg.getInt(offset));
-  }
-  else if (msg.fullMatch("/set_hue_1", offset))
-  {
-    if (msg.isInt(offset + 1))
-      hue1 = msg.getInt(offset + 1);
-  }
-  else if (msg.fullMatch("/set_sat_0", offset))
-  {
-    if (msg.isInt(offset + 1))
-      sat0 = msg.getInt(offset + 1);
-  }
-  else if (msg.fullMatch("/set_sat_1", offset))
-  {
-    if (msg.isInt(offset + 1))
-      sat1 = msg.getInt(offset + 1);
-  }
-  else if (msg.fullMatch("/set_val_0", offset))
-  {
-    if (msg.isFloat(offset + 1))
-      val0 = msg.getFloat(offset + 1);
-  }
-  else if (msg.fullMatch("/set_val_1", offset))
-  {
-    if (msg.isFloat(offset + 1))
-      val1 = msg.getFloat(offset + 1);
-  }
+//   else if (msg.fullMatch("/get_hue_0", offset))
+//   {
+// //    DIAG_PRINTLN("HUE0 REQ");
+//     char boardIdent[24];
+//     sprintf(boardIdent, "%s/hue_0", oscRouteName);
+// //    DIAG_PRINTLN("boardIdent");
+//     OSCMessage response(boardIdent);
+//     DIAG_PRINT(">>>>>>>>HUE0: ");
+//     DIAG_PRINTLN(hue0);
+//     response.add((int)hue0);
+//     Udp.beginPacket(outAddr, outPort);
+//     response.send(Udp);
+//     Udp.endPacket();
+//     response.empty();
+//   }
+//   else if (msg.fullMatch("/get_hue_1", offset))
+//   {
+//     char boardIdent[24];
+//     sprintf(boardIdent, "%s/hue_1", oscRouteName);
+//     OSCMessage response(boardIdent);
+//     response.add(hue1);
+//     Udp.beginPacket(outAddr, outPort);
+//     response.send(Udp);
+//     Udp.endPacket();
+//     response.empty();
+//   }
+//   else if (msg.fullMatch("/get_sat_0", offset))
+//   {
+//     char boardIdent[24];
+//     sprintf(boardIdent, "%s/sat_0", oscRouteName);
+//     OSCMessage response(boardIdent);
+//     response.add(sat0);
+//     Udp.beginPacket(outAddr, outPort);
+//     response.send(Udp);
+//     Udp.endPacket();
+//     response.empty();
+//   }
+//   else if (msg.fullMatch("/get_sat_1", offset))
+//   {
+//     char boardIdent[24];
+//     sprintf(boardIdent, "%s/sat_1", oscRouteName);
+//     OSCMessage response(boardIdent);
+//     response.add(sat1);
+//     Udp.beginPacket(outAddr, outPort);
+//     response.send(Udp);
+//     Udp.endPacket();
+//     response.empty();
+//   }
+//   else if (msg.fullMatch("/get_val_0", offset))
+//   {
+//     char boardIdent[24];
+//     sprintf(boardIdent, "%s/val_0", oscRouteName);
+//     OSCMessage response(boardIdent);
+//     response.add(val0);
+//     Udp.beginPacket(outAddr, outPort);
+//     response.send(Udp);
+//     Udp.endPacket();
+//     response.empty();
+//   }
+//   else if (msg.fullMatch("/get_val_1", offset))
+//   {
+//     char boardIdent[24];
+//     sprintf(boardIdent, "%s/val_1", oscRouteName);
+//     OSCMessage response(boardIdent);
+//     response.add(val1);
+//     Udp.beginPacket(outAddr, outPort);
+//     response.send(Udp);
+//     Udp.endPacket();
+//     response.empty();
+//   }
+//   else if (msg.fullMatch("/set_hue_0", offset))
+//   {
+//     if (msg.isInt(offset + 1))
+//       hue0 = msg.getInt(offset + 1);
+// //      DIAG_PRINTLN(msg.getInt(offset));
+//   }
+//   else if (msg.fullMatch("/set_hue_1", offset))
+//   {
+//     if (msg.isInt(offset + 1))
+//       hue1 = msg.getInt(offset + 1);
+//   }
+//   else if (msg.fullMatch("/set_sat_0", offset))
+//   {
+//     if (msg.isInt(offset + 1))
+//       sat0 = msg.getInt(offset + 1);
+//   }
+//   else if (msg.fullMatch("/set_sat_1", offset))
+//   {
+//     if (msg.isInt(offset + 1))
+//       sat1 = msg.getInt(offset + 1);
+//   }
+//   else if (msg.fullMatch("/set_val_0", offset))
+//   {
+//     if (msg.isFloat(offset + 1))
+//       val0 = msg.getFloat(offset + 1);
+//   }
+//   else if (msg.fullMatch("/set_val_1", offset))
+//   {
+//     if (msg.isFloat(offset + 1))
+//       val1 = msg.getFloat(offset + 1);
+//   }
 #endif
 }
 /*
@@ -750,12 +762,12 @@ void updateBumpHSV()
   val_b = (float)beatsin16(2, 15300, 43350) / 255. + 80.;
   // val_b = 200;
 
-    DIAG_PRINT(" HUE_b ");
-    DIAG_PRINT(hue_b);
-    DIAG_PRINT(" SAT_b ");
-    DIAG_PRINT(sat_b);
-    DIAG_PRINT(" VAL_b ");
-    DIAG_PRINTLN(val_b);
+//    DIAG_PRINT(" HUE_b ");
+//    DIAG_PRINT(hue_b);
+//    DIAG_PRINT(" SAT_b ");
+//    DIAG_PRINT(sat_b);
+//    DIAG_PRINT(" VAL_b ");
+//    DIAG_PRINTLN(val_b);
 }
 
 CHSV getBlendedHSV(CHSV startC, CHSV endC, int index)
