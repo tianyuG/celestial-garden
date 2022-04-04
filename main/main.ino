@@ -103,11 +103,13 @@ float deltaY = 0.;
 float accl[2];
 float rollingAverageAcclX = 0;
 float rollingAverageAcclY = 0;
-bool needsFadeIn = false;
+// bool needsFadeIn = false;
+uint16_t boardVariation = (boardIndex * 27) % 21;
+uint8_t subtleBoardVariation = 0;
 
 // CRGBArray<numLeds> leds;
 CRGB leds[numLeds];
-CRGB ghostLeds[numLeds];
+// CRGB ghostLeds[numLeds];
 // CRGBSet leds_t(leds(0, numLeds - numBttmLeds - 1));
 // CRGBSet leds_b(leds(numLeds - numBttmLeds, numLeds - 1));
 //  CRGBPalette16 currentPalette;
@@ -715,12 +717,18 @@ void pollAccl()
 #endif
 }
 
+/*
+ * Function that provides new `hue`, `sat` and `val` based on time and
+ * accelerometer readout
+ * 
+ * Can tweak the range of `beatsin8()` to make it more varied.
+ */
 void updateIdleHSV()
 {
   unsigned long timeVariation = ((millis() / 250) + 22) % 23;
-  uint16_t boardVariation = (boardIndex * 27) % 21;
-  hue = beatsin8(2, 30, 120) + boardVariation + map(scaledY - 30, 160, 255, hue0, hue1);
-  sat = beatsin8(3, 20, 120) - boardVariation + map(scaledX - 30, 160, 255, hue0, hue1);
+  subtleBoardVariation = (boardIndex % 7 + 1) * 2;
+  hue = beatsin8(2, 30, 120) + boardVariation + map(scaledY - 30, 160, 255, hue0, hue1 + subtleBoardVariation);
+  sat = beatsin8(3, 20, 120) - boardVariation + map(scaledX - 30, 160, 255, sat0, sat1);
   val = (float)beatsin16(2, 0, 15300) / 256. + 80.;
   // val = 200;
 
