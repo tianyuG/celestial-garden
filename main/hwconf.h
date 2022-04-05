@@ -109,6 +109,6 @@ static const uint8_t blendCount = 127;
 
 static const unsigned int animationTimeout = 3000;
 
-// Minimum amount of time between animations
-static const unsigned long minAnimationDuration = 5000;
+// // Minimum amount of time between animations
+// static const unsigned long minAnimationDuration = 5000;
 #endif

@@ -36,6 +36,7 @@
                 "C:\\Users\\Tianyu\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\samd\\1.7.10\\libraries\\Wire",
                 "C:\\Users\\Tianyu\\Documents\\Arduino\\libraries\\Adafruit_Unified_Sensor",
                 "C:\\Users\\Tianyu\\Documents\\Arduino\\libraries\\FastLED\\src",
+                "C:\\Users\\Tianyu\\Documents\\Arduino\\libraries\\ArduinoOTA\\src",
                 "c:\\users\\tianyu\\appdata\\local\\arduino15\\packages\\adafruit\\tools\\arm-none-eabi-gcc\\9-2019q4\\arm-none-eabi\\include\\c++\\9.2.1",
                 "c:\\users\\tianyu\\appdata\\local\\arduino15\\packages\\adafruit\\tools\\arm-none-eabi-gcc\\9-2019q4\\arm-none-eabi\\include\\c++\\9.2.1\\arm-none-eabi",
                 "c:\\users\\tianyu\\appdata\\local\\arduino15\\packages\\adafruit\\tools\\arm-none-eabi-gcc\\9-2019q4\\arm-none-eabi\\include\\c++\\9.2.1\\backward",
@@ -49,7 +50,7 @@
             "cStandard": "c11",
             "cppStandard": "c++11",
             "defines": [
-                "__SKETCH_NAME__=\"\"\"SerialNumberIdentifier.ino\"\"\"",
+                "__SKETCH_NAME__=\"\"\"main.ino\"\"\"",
                 "F_CPU=48000000L",
                 "ARDUINO=10819",
                 "ARDUINO_SAMD_ZERO",
