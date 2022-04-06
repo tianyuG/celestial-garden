@@ -52,7 +52,7 @@ The diagnostics [Max](https://cycling74.com/products/max) patcher requires the f
 
   - _Reason_: To allow better OSC communication.
 
-  - Does not currently support [computers using Apple silicon](https://support.apple.com/en-us/HT211814). Beta version of CMNAT External ([v. 1.0.4c](https://github.com/CNMAT/CNMAT-Externs/releases/tag/v1.0.4c)) should be compatible.
+  - Does not currently support [computers using Apple silicon](https://support.apple.com/en-us/HT211814). Beta version of CNMAT External ([v. 1.0.4c](https://github.com/CNMAT/CNMAT-Externs/releases/tag/v1.0.4c)) should be compatible.
 
 The Arduino firmware has been tested with Arduino IDE on Windows 10. The diagnostics patcher has been tested with Max 8.2.2 on Windows 10.
 
