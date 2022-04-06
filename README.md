@@ -12,6 +12,7 @@ Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://accelera
   - [Bootup Sequence](#bootup-sequence)
   - [Known Issues](#known-issues)
   - [OSC Messaging Formats](#osc-messaging-formats)
+  - [Max/MSP Patchers](#maxmsp-patchers)
   - [Miscellaneous Documentation](#miscellaneous-documentation)
 
 ## Prerequisites
@@ -93,7 +94,7 @@ If the correct Arduino patch is uploaded to the board, the LED strip is receivin
 - Arduino will wait until the accelerometer comes online and apply correct settings.
 - Arduino will setup local network by using known MAC and IP addresses.
   - If local network setup fails, it will provide a warning on Serial Monitor, the `L` LED on Arduino board will blink red on and off every 500 milliseconds, and the program will halt.
-- Arduino will initialise over-the-air firmware update module is `ENABLE_OTA` macro is set (it is set by default).
+- Arduino will initialise over-the-air firmware update module if `ENABLE_OTA` macro is set (it is set by default).
 - Lightstrip will come on for five seconds in white. The initial setup is complete after this.
 
 If Arduino is connected over USB, it will provide diagnostics over Serial Monitor in Arduino IDE (if `DISPLAY_DIAG` macro is set, which is the case by default).
@@ -105,6 +106,11 @@ See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 ## OSC Messaging Formats
 
 See [OSC_MESSAGES.md](OSC_MESSAGES.md).
+
+## Max/MSP Patchers
+
+- [`MaxMSP/diagnostics.maxpat`](MaxMSP/diagnostics.maxpat): Used internally for diagnostics. Not fully functional.
+- [`MaxMSP/at_a_glance.maxpat`](MaxMSP/at_a_glance.maxpat): Used to show the attendees what's going on with the pods.
 
 ## Miscellaneous Documentation
 
