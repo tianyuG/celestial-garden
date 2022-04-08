@@ -365,13 +365,8 @@ void sendOSCStream(osc_cmds cmd, uint8_t currentVal)
     break;
   case (bump):
     sprintf(boardIdent, "%s/xy", oscRouteName);
-    //      DIAG_PRINT(boardIdent);
-    //  DIAG_PRINTLN("  bang");
     break;
   }
-  //  DIAG_PRINT(boardIdent);
-  //  DIAG_PRINT(" ");
-  //  DIAG_PRINTLN(currentVal);
 
   OSCMessage msg(boardIdent);
   if (cmd == bump)
@@ -507,6 +502,11 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     sprintf(boardIdent, "%s/version", oscRouteName);
     response.add(boardIdent).add(version);
   }
+  else if (msg.match("/ping", offset)) {
+    char boardIdent[24];
+    sprintf(boardIdent, "%s/ping", oscRouteName);
+    response.add(boardIdent).add(1);
+  }
   else if (msg.match("/get_hue_0", offset))
   {
     //    DIAG_PRINTLN("HUE0 REQ");
@@ -547,33 +547,34 @@ void parseOSCMessage(OSCMessage &msg, int offset)
   }
   else if (msg.match("/set_hue_0", offset))
   {
-    if (msg.isInt(offset + 1))
-      hue0 = msg.getInt(offset + 1);
+    // offset/offset + 1?
+    if (msg.isInt(0))
+      hue0 = msg.getInt(0);
   }
   else if (msg.match("/set_hue_1", offset))
   {
-    if (msg.isInt(offset + 1))
-      hue1 = msg.getInt(offset + 1);
+    if (msg.isInt(0))
+      hue1 = msg.getInt(0);
   }
   else if (msg.match("/set_sat_0", offset))
   {
-    if (msg.isInt(offset + 1))
-      sat0 = msg.getInt(offset + 1);
+    if (msg.isInt(0))
+      sat0 = msg.getInt(0);
   }
   else if (msg.match("/set_sat_1", offset))
   {
-    if (msg.isInt(offset + 1))
-      sat1 = msg.getInt(offset + 1);
+    if (msg.isInt(0))
+      sat1 = msg.getInt(0);
   }
   else if (msg.match("/set_val_0", offset))
   {
-    if (msg.isFloat(offset + 1))
-      val0 = msg.getFloat(offset + 1);
+    if (msg.isFloat(0))
+      val0 = msg.getFloat(0);
   }
   else if (msg.match("/set_val_1", offset))
   {
-    if (msg.isFloat(offset + 1))
-      val1 = msg.getFloat(offset + 1);
+    if (msg.isFloat(0))
+      val1 = msg.getFloat(0);
   }
 #endif
 }

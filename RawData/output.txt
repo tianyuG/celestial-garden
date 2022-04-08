@@ -1,10 +1,27 @@
-C:\Users\Tianyu\celestial-garden\main\main.ino: In function 'void parseOSCMessage(OSCMessage&, int)':
-C:\Users\Tianyu\celestial-garden\main\main.ino:593:13: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]
-  593 |     sprintf("%s/ping", oscRouteName);
-      |             ^~~~~~~~~
-Sketch uses 68856 bytes (26%) of program storage space. Maximum is 262144 bytes.
-Connecting to board ...  done
-Uploading sketch ...  done
-Flashing sketch ...  done
-OK
-Sketch uploaded successfully
+
+
+
+
+
+
+
+
+
+
+C:\Users\Tianyu\Documents\Arduino\libraries\OSC\OSCMessage.cpp: In member function 'int OSCMessage::getBlob(int, uint8_t*)':
+C:\Users\Tianyu\Documents\Arduino\libraries\OSC\OSCMessage.cpp:237:16: warning: converting to non-pointer type 'int' from NULL [-Wconversion-null]
+  237 |         return NULL;
+      |                ^~~~
+C:\Users\Tianyu\Documents\Arduino\libraries\OSC\OSCMessage.cpp: In member function 'int OSCMessage::getBlob(int, uint8_t*, int)':
+C:\Users\Tianyu\Documents\Arduino\libraries\OSC\OSCMessage.cpp:250:16: warning: converting to non-pointer type 'int' from NULL [-Wconversion-null]
+  250 |         return NULL;
+      |                ^~~~
+C:\Users\Tianyu\Documents\Arduino\libraries\OSC\OSCMessage.cpp: In member function 'int OSCMessage::getBlob(int, uint8_t*, int, int, int)':
+C:\Users\Tianyu\Documents\Arduino\libraries\OSC\OSCMessage.cpp:263:16: warning: converting to non-pointer type 'int' from NULL [-Wconversion-null]
+  263 |         return NULL;
+      |                ^~~~
+C:\Users\Tianyu\Documents\Arduino\libraries\OSC\OSCMessage.cpp: In member function 'uint32_t OSCMessage::getBlobLength(int)':
+C:\Users\Tianyu\Documents\Arduino\libraries\OSC\OSCMessage.cpp:277:16: warning: converting to non-pointer type 'uint32_t' {aka 'long unsigned int'} from NULL [-Wconversion-null]
+  277 |         return NULL;
+      |                ^~~~
+Sketch uses 70920 bytes (27%) of program storage space. Maximum is 262144 bytes.

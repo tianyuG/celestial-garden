@@ -193,21 +193,25 @@ _Handled by `parseOSCMessage()`._
 
 ```
 /pod[ID]/ping
+/pod[ID]/ping 1
 ```
 
 _Handled by `parseOSCMessage()`._
 
-**Receives** ping from server and **sends** a response to ensure the program had not halted. Used for testing purposes.
+**Receives** ping from server and **sends** a response (`ping 1`) to ensure the program had not halted. Used for testing purposes.
 
 ## (S, R) `version`
 
 ```
 /pod[ID]/version
+/pod[ID]/version [Data]
 ```
 
 _Handled by `parseOSCMessage()`._
 
-**Receives** request from server and **sends** the internal version of the firmware. This functionality was not implemented prior to 1 April.
+**Receives** request from server and **sends** the internal version of the firmware. This functionality was not implemented prior to 1 April. Used to confirm that the Arduino board is running a particular version of the firmware.
+
+[Data] (char*) the internal versioning of the firmware.
 
 ## (R) `get_hue_0`, `get_hue_1`, `get_sat_0`, `get_sat_1`, `get_val_0`, `get_val_1`
 

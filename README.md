@@ -1,8 +1,8 @@
 # celestial-garden
 
-Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://acceleratefestival.com/exhibits/celestial-garden/) ([archived](https://web.archive.org/web/20220327211602/https://acceleratefestival.com/exhibits/celestial-garden/)).
+Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://acceleratefestival.com/exhibits/celestial-garden/) ([archived](https://web.archive.org/web/20220327211602/https://acceleratefestival.com/exhibits/celestial-garden/)). Code in this repository controls the visual effects and transports data used by diagnostics and audio generation over local network.
 
-> _Main code and documentation written in 2022 by Tianyu Ge, with portions of code adapted from earlier works by [David Franusich](./ReferenceCode/IlluminousBuoys_LED-OSC_control-211213/IlluminousBuoys_LED-OSC_control-211213.ino), [Matthew Swarts](ReferenceCode/ACC_2022_CelestialGarden_LEDtest/ACC_2022_CelestialGarden_LEDtest.ino), and [Adrian](ReferenceCode/OSC_UDPReceive/OSC_UDPReceive.ino) [Freed](ReferenceCode/UDPSendMessage-220324.ino)._
+> _Main firmware, documentation, and diagnostics written in 2022 by Tianyu Ge, with portions of code adapted from earlier works by [David Franusich](./ReferenceCode/IlluminousBuoys_LED-OSC_control-211213/IlluminousBuoys_LED-OSC_control-211213.ino), [Matthew Swarts](ReferenceCode/ACC_2022_CelestialGarden_LEDtest/ACC_2022_CelestialGarden_LEDtest.ino), and [Adrian](ReferenceCode/OSC_UDPReceive/OSC_UDPReceive.ino) [Freed](ReferenceCode/UDPSendMessage-220324.ino)._
 
 - [celestial-garden](#celestial-garden)
   - [Prerequisites](#prerequisites)
@@ -10,6 +10,8 @@ Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://accelera
     - [Over-the-Air (OTA) Firmware Update](#over-the-air-ota-firmware-update)
   - [Terminologies](#terminologies)
   - [Bootup Sequence](#bootup-sequence)
+    - [Serial Console](#serial-console)
+    - [Pod does not light up](#pod-does-not-light-up)
   - [Known Issues](#known-issues)
   - [OSC Messaging Formats](#osc-messaging-formats)
   - [Max/MSP Patchers](#maxmsp-patchers)
@@ -47,7 +49,7 @@ The Arduino firmware requires the following external libraries.
 
   - _Reason_: Used to provide over-the-air firmware flashing.
 
-The diagnostics [Max](https://cycling74.com/products/max) patcher requires the following packages:
+The diagnostics [Max](https://cycling74.com/products/max) patcher requires the following package:
 
 - [CNMAT External](https://cnmat.berkeley.edu/downloads) >= 1.0.4.
 
@@ -89,15 +91,26 @@ If the correct Arduino patch is uploaded to the board, the LED strip is receivin
   - The list of known serial numbers and corresponding MAC and IP addresses are in [`hwconf.h`](main/hwconf.h). In usage, the arrays are zero-indexed.
   - The original list of known serial numbers and corresponding MAC and IP addresses are in [`BOARD_IDENT.csv`](BOARD_IDENT.csv). In usage, the list is one-indexed.
   - Only the last three bytes of the Arduino board serial number are needed.
-  - To determine the Arduino board serial number, upload a simple patch to Arduino and select _Tools > Get Board Info_ in Arduino IDE, and take note of the last three bytes in the sequence you see in the S/N field. For example, the S/N of `41B1592C50553158342E3120FF180E34` (currently board 2) has the last three bytes of `0x18`, `0x0E`, and `0x34`. Consequently, the MAC address (the second entry, or index 1) is `2C:F7:F1:08:39:73` (The Serial Monitor will likely not report the leading zero of `08`), and the IP address (ditto) is `192.168.1.102`.
+  - To determine the Arduino board serial number, upload a simple patch to Arduino and select _Tools > Get Board Info_ in Arduino IDE, and take note of the last three bytes in the sequence you see in the S/N field. For example, the S/N of `41B1592C50553158342E3120FF180E34` (currently board 2) has the last three bytes of `0x18`, `0x0E`, and `0x34`. Consequently, the MAC address (the second entry, or index 1) is `2C:F7:F1:08:39:73` (The Serial Monitor will likely not report the leading zero of `08`), and the IP address is `192.168.1.102`.
   - If a board is not documented, the `L` LED on the Arduino board will blink red on and off every 500 milliseconds, and the code will halt.
 - Arduino will wait until the accelerometer comes online and apply correct settings.
 - Arduino will setup local network by using known MAC and IP addresses.
   - If local network setup fails, it will provide a warning on Serial Monitor, the `L` LED on Arduino board will blink red on and off every 500 milliseconds, and the program will halt.
 - Arduino will initialise over-the-air firmware update module if `ENABLE_OTA` macro is set (it is set by default).
-- Lightstrip will come on for five seconds in white. The initial setup is complete after this.
+- Lightstrip will come on for five seconds in white if `ENABLE_OSC` is set (it is set by default). The initial setup is complete after this.
+
+### Serial Console
 
 If Arduino is connected over USB, it will provide diagnostics over Serial Monitor in Arduino IDE (if `DISPLAY_DIAG` macro is set, which is the case by default).
+
+### Pod does not light up
+
+If a pod does not light up and the `L` LED blinks red on and off every 500 seconds, there are two possibilities:
+
+- None of the known serial numbers matches the board that has the firmware. Double check the board is one of the 18 available boards and if necessary, adjust the board serial number, corresponding MAC address and IP address in `hwinfo.h`. (This can be easily determined by checking the Serial Monitor)
+
+- The networking stack initialisation stalls for some reason. This has happened to the old board 14 and we determined that there is an associated hardware problem. We have not yet figured out if the Arduino board itself or the hardware hat is faulty, but the problem was resolved after swapping it with board 18. (On Serial Monitor, output will halt after 'Corresponding IP address is...')
+
 
 ## Known Issues
 
