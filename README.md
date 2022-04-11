@@ -2,9 +2,15 @@
 
 Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://acceleratefestival.com/exhibits/celestial-garden/) ([archived](https://web.archive.org/web/20220327211602/https://acceleratefestival.com/exhibits/celestial-garden/)). Code in this repository controls the visual effects and transports data used by diagnostics and audio generation over local network.
 
-> _Main firmware, documentation, and diagnostics written in 2022 by Tianyu Ge, with portions of code adapted from earlier works by [David Franusich](./ReferenceCode/IlluminousBuoys_LED-OSC_control-211213/IlluminousBuoys_LED-OSC_control-211213.ino), [Matthew Swarts](ReferenceCode/ACC_2022_CelestialGarden_LEDtest/ACC_2022_CelestialGarden_LEDtest.ino), and [Adrian](ReferenceCode/OSC_UDPReceive/OSC_UDPReceive.ino) [Freed](ReferenceCode/UDPSendMessage-220324.ino)._
+> _Main firmware, documentation, and diagnostics written in 2022 by Tianyu Ge._
+
+A project from Institute for Creativity, Arts and Technology (ICAT) at Virginia Tech.
 
 - [celestial-garden](#celestial-garden)
+  - [Description](#description)
+    - [Work roles](#work-roles)
+    - [Acknowledgements](#acknowledgements)
+    - [Reflections](#reflections)
   - [Prerequisites](#prerequisites)
   - [Usage](#usage)
     - [Over-the-Air (OTA) Firmware Update](#over-the-air-ota-firmware-update)
@@ -16,6 +22,34 @@ Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://accelera
   - [OSC Messaging Formats](#osc-messaging-formats)
   - [Max/MSP Patchers](#maxmsp-patchers)
   - [Miscellaneous Documentation](#miscellaneous-documentation)
+
+## Description
+
+### Work roles
+
+Tanner Upthegrove (Institute for Creativity, Arts and Technology; ICAT): Ideation; audio design and processing; docent.
+
+Matthew Swarts: electronics design.
+
+Thomas Tucker (School of Visual Arts; SOVA): Ideation; hardware and visual design, and fabrication; docent.
+
+David Franusich (ICAT): Ideation; hardware and experience design; docent.
+
+Tianyu Ge (Department of Computer Science): Software implementation and interaction design; docent.
+
+Rodney Kimbangu (SOVA): Video documentation; docent.
+
+Charlie Duff: Docent.
+
+### Acknowledgements
+
+Portions of code adapted from earlier works by [David Franusich](./ReferenceCode/IlluminousBuoys_LED-OSC_control-211213/IlluminousBuoys_LED-OSC_control-211213.ino), [Matthew Swarts](ReferenceCode/ACC_2022_CelestialGarden_LEDtest/ACC_2022_CelestialGarden_LEDtest.ino), and [Adrian](ReferenceCode/OSC_UDPReceive/OSC_UDPReceive.ino) [Freed](ReferenceCode/UDPSendMessage-220324.ino).
+
+With thanks to staffs at the Smithsonian National Museum of American History, the ACCelerate 2022 festival staffs and organising committee, ICAT staffs and management, Christina Franusich for photography, students from Studio 72 for helping with taking down the installation as well as the open source community that helped this project.
+
+### Reflections
+
+See [POST_MORTEM.md](POST_MORTEM.md).
 
 ## Prerequisites
 
@@ -111,7 +145,6 @@ If a pod does not light up and the `L` LED blinks red on and off every 500 secon
 
 - The networking stack initialisation stalls for some reason. This has happened to the old board 14 and we determined that there is an associated hardware problem. We have not yet figured out if the Arduino board itself or the hardware hat is faulty, but the problem was resolved after swapping it with board 18. (On Serial Monitor, output will halt after 'Corresponding IP address is...')
 
-
 ## Known Issues
 
 See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
@@ -128,5 +161,4 @@ See [OSC_MESSAGES.md](OSC_MESSAGES.md).
 ## Miscellaneous Documentation
 
 - Descriptions on what the macros do: [MACROS_DESC.md](MACROS_DESC.md);
-  
 - Descriptions on what the files do: [FILES_DESC.md](FILES_DESC.md).

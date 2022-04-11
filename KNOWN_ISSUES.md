@@ -3,18 +3,22 @@
 - [Known Issues](#known-issues)
   - [Won't Fix/Can't Fix](#wont-fixcant-fix)
     - [Lightstrip flickers](#lightstrip-flickers)
+    - [UDP packet drops](#udp-packet-drops)
   - [Investigating](#investigating)
-    - [Bump animation uses static colour](#bump-animation-uses-static-colour)
-    - [Bump animation and idle animation does not transition well](#bump-animation-and-idle-animation-does-not-transition-well)
+    - [The diagnostics OSC messages do not currently work](#the-diagnostics-osc-messages-do-not-currently-work)
   - [Fixed](#fixed)
     - [Board Misidentifies Itself](#board-misidentifies-itself)
     - [Board Refuses to Respond to OSC Messages](#board-refuses-to-respond-to-osc-messages)
     - [Bump animation too short](#bump-animation-too-short)
     - [Pods are unresponsive or network data output is slow](#pods-are-unresponsive-or-network-data-output-is-slow)
+    - [Bump animation uses static colour](#bump-animation-uses-static-colour)
+    - [Bump animation and idle animation does not transition well](#bump-animation-and-idle-animation-does-not-transition-well)
 
 ## Won't Fix/Can't Fix
 
 ### Lightstrip flickers
+
+`WONTFIX`
 
 This is a known issue with this (APA102) particular LED when changing brightness. Can't get it fixed.
 
@@ -29,8 +33,9 @@ See:
 - [APA102 LED panels have flicker problem](https://forums.adafruit.com/viewtopic.php?f=47&p=874973)
 
 - [Flicker](https://github.com/jasoncoon/esp32-fastled-webserver/issues/8)
+
   > Soooooo all that I needed to do was change the FASTLED_SHOW_CORE to 1 instead of 0 and there is no longer any flicker at all. I have no idea why this would be the case but props to u/Jem_Spencer for the fix! Maybe change this in your code?
-  
+
   Tried and that didn't help.
 
 - [APA102 aka “Superled”](https://cpldcpu.wordpress.com/2014/08/27/apa102/)
@@ -43,17 +48,19 @@ See:
 
   Tried both 12Mhz and 10 Mhz and that didn't help.
 
+### UDP packet drops
+
+`WONTFIX`
+
+Expected; does not affect the animation or audio, low priority.
+
 ## Investigating
 
-### Bump animation uses static colour
+### The diagnostics OSC messages do not currently work
 
-Working on a function to change bump animation colour
+(Do not currently plan to fix, low priority)
 
-### Bump animation and idle animation does not transition well
-
-Currently idle animation uses `fill_gradient()` which makes it near impossible to transition from bump animation (`fill_gradient()` changes the lightstrip instantly, which is difficult to blend as it needs to be able to know the colour it is transition to -- trust me I tried). Planning to change `fill_gradient()` to `fill_solid()`.
-
-
+Most of the diagnostic OSC messages in the `parseOSCMessage()` (e.g., `ping`, `version`, `get_hue_0`, `set_hue_0`) do not currently function. Suspected issues with binding the fallback function to the OSC routing. For the ones that do work, there are issues with debouncing (for example, sending `ident` would result in multiple `ident` messages being sent, or `parseOSCMessage()` interpret that it had received multiple `ident` requests).
 
 ## Fixed
 
@@ -94,3 +101,19 @@ Working on a buffer for HSV values to hopefully even out the result a bit.
 Currently, both the audio computer and the diagnostics computer need to be connected to the network for the pods to be functioning properly. Ensure the connection to both computers are connected and stable.
 
 **Solution**: Changed UDP from anycast to broadcast address and the problem has been resolved.
+
+### Bump animation uses static colour
+
+`RESOLVED`
+
+~~Working on a function to change bump animation colour~~
+
+**Solution**: The bump animation now changes colour.
+
+### Bump animation and idle animation does not transition well
+
+`RESOLVED`
+
+~~Currently idle animation uses `fill_gradient()` which makes it near impossible to transition from bump animation (`fill_gradient()` changes the lightstrip instantly, which is difficult to blend as it needs to be able to know the colour it is transition to -- trust me I tried). Planning to change `fill_gradient()` to `fill_solid()`.~~
+
+**Solution**: Made a custom blend function to help with the transition issue.

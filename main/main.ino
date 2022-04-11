@@ -228,11 +228,12 @@ void setup()
 #ifdef ENABLE_OSC
   for (int i = 0; i < numLeds; i++)
   {
-    leds[i] = CRGB(100, 100, 100);
+    leds[i] = CRGB(255, 255, 255);
   }
   DIAG_PRINTLN("Lightstrip will now light up for five seconds.");
   FastLED.show();
-  delay(5000);
+  FastLED.setBrightness(200);
+  delay(1000);
 #endif
   animationTimer = millis();
   FastLED.setDither(1);
@@ -256,8 +257,6 @@ void loop()
       msgIn.fill(Udp.read());
       if (!msgIn.hasError())
       {
-        // DIAG_PRINT(oscRouteName);
-        // msgIn.route(oscRouteName, parseOSCMessage);
         msgIn.route(oscRouteName, parseOSCMessage, strlen(oscRouteName) - 1);
       }
       Udp.beginPacket(outAddr, outPort);
@@ -269,10 +268,6 @@ void loop()
 #endif
 
   pollAccl();
-  //        DIAG_PRINT("scaledX: ");
-  //      DIAG_PRINT(scaledX);
-  //      DIAG_PRINT(" scaledY: ");
-  //      DIAG_PRINTLN(scaledY);
   updateIdleHSV();
 
   if (abs(deltaX) + abs(deltaY) > bumpThreshold && millis() - animationTimer > animationTimeout)
@@ -286,15 +281,7 @@ void loop()
         pollAccl();
         updateBumpHSV();
         if (i > 0)
-        {
-          //          DIAG_PRINT(" hue_b ");
-          //          DIAG_PRINT(hue_b);
-          //          DIAG_PRINT(" sat_b ");
-          //          DIAG_PRINT(sat_b);
-          //          DIAG_PRINT(" val_b ");
-          //          DIAG_PRINTLN(val_b);
           leds[j == 5 ? i : i--] = CHSV(hue_b, sat_b, val_b);
-        }
       }
 
       FastLED.show();
@@ -502,7 +489,8 @@ void parseOSCMessage(OSCMessage &msg, int offset)
     sprintf(boardIdent, "%s/version", oscRouteName);
     response.add(boardIdent).add(version);
   }
-  else if (msg.match("/ping", offset)) {
+  else if (msg.match("/ping", offset))
+  {
     char boardIdent[24];
     sprintf(boardIdent, "%s/ping", oscRouteName);
     response.add(boardIdent).add(1);
@@ -659,28 +647,16 @@ void updateIdleHSV()
   sat = beatsin8(3, 20, 120) - boardVariation + map(scaledX - 30, 160, 255, sat0, sat1);
   val = (float)beatsin16(2, 15300, 38250) / 255. + 80.;
   // val = 200;
-
-  //   DIAG_PRINT(" HUE ");
-  //   DIAG_PRINT(hue);
-  //   DIAG_PRINT(" SAT ");
-  //   DIAG_PRINT(sat);
-  //   DIAG_PRINT(" VAL ");
-  //   DIAG_PRINTLN(val);
 }
 
 void updateBumpHSV()
 {
-  hue_b = constrain((uint8_t)((140 - subtleBoardVariation) | (uint8_t)~hue), 80, 220) + (millis() / 250) % 21 + deltaY * 10;
-  sat_b = constrain((uint8_t)(80 + boardVariation | (uint8_t)~sat), 80, 220) + (millis() / 250) % 19 + deltaX * 10;
+  hue_b = constrain((uint8_t)((140 - subtleBoardVariation) | (uint8_t)~hue), 80, 220) + (millis() / 150) % 21 + deltaY * 10;
+  //  hue_b = constrain((uint8_t)((140 - subtleBoardVariation) | (uint8_t)~hue), 80, 220) + (millis() / 250) % 21 + deltaY * 10;
+  sat_b = constrain((uint8_t)(80 + boardVariation | (uint8_t)~sat), 80, 220) + (millis() / 150) % 19 + deltaX * 10;
+  //  sat_b = constrain((uint8_t)(80 + boardVariation | (uint8_t)~sat), 80, 220) + (millis() / 250) % 19 + deltaX * 10;
   val_b = (float)beatsin16(2, 15300, 43350) / 255. + 80.;
   // val_b = 200;
-
-  //    DIAG_PRINT(" HUE_b ");
-  //    DIAG_PRINT(hue_b);
-  //    DIAG_PRINT(" SAT_b ");
-  //    DIAG_PRINT(sat_b);
-  //    DIAG_PRINT(" VAL_b ");
-  //    DIAG_PRINTLN(val_b);
 }
 
 CHSV getBlendedHSV(CHSV startC, CHSV endC, int index)

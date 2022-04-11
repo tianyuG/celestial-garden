@@ -19,7 +19,7 @@
   - [(R) `get_hue_0`, `get_hue_1`, `get_sat_0`, `get_sat_1`, `get_val_0`, `get_val_1`](#r-get_hue_0-get_hue_1-get_sat_0-get_sat_1-get_val_0-get_val_1)
   - [(S) `hue_0`, `hue_1`, `sat_0`, `sat_1`, `val_0`, `val_1` [Data]](#s-hue_0-hue_1-sat_0-sat_1-val_0-val_1-data)
   - [(R) `set_hue_0`, `set_hue_1`, `set_sat_0`, `set_sat_1`, `set_val_0`, `set_val_1` [Data]](#r-set_hue_0-set_hue_1-set_sat_0-set_sat_1-set_val_0-set_val_1-data)
-  
+
 ## General rules
 
 - Space between parts of the messages should be interpreted as two parts of the messages, as opposed to one single message. Form the first part of the message and use `add()` of the `OSCMessage` class to add the additional parts of the message. This is needed for the Max patch to parse the message correctly.
@@ -39,6 +39,8 @@
 - 28 May 2022: Added new message `my_ip` and changed messaged from camelCase to snake_case. This can be breaking for some previous messages such as `acclx` (changed to `accl_x`) and `accly` (changed to `accl_y`), but the rationale behind this change was to improve readability. In addition, none of the messages were previously used in the Max/MSP patch, so these changes should not affect anything that's working currently.
 
 - 1 April 2022: The OSC messaging can be completely turned off by unsetting the `ENABLE_OSC` macro. This can be useful during testing.
+
+- 8 April 2022: Acknowledging that many messages that are handled by the `parseOSCMessage()` callback function do not currently work. It is not going to be fixed at this time as it is low in priority.
 
 ## (S) `x` or `y` [Data]
 
@@ -181,7 +183,7 @@ _Handled by `parseOSCMessage()`._
 /pod[ID]/ident
 ```
 
-_Handled by `parseOSCMessage()`._
+_Handled by `parseOSCMessage()`. Currently one `ident` message would result in what appears to be multiple responses of `ident`s._
 
 **Receives** by Arduino so it will identify the pod that matches a particular ID.
 
@@ -196,7 +198,7 @@ _Handled by `parseOSCMessage()`._
 /pod[ID]/ping 1
 ```
 
-_Handled by `parseOSCMessage()`._
+_Handled by `parseOSCMessage()`. Currently not working._
 
 **Receives** ping from server and **sends** a response (`ping 1`) to ensure the program had not halted. Used for testing purposes.
 
@@ -207,11 +209,11 @@ _Handled by `parseOSCMessage()`._
 /pod[ID]/version [Data]
 ```
 
-_Handled by `parseOSCMessage()`._
+_Handled by `parseOSCMessage()`. Currently not working._
 
 **Receives** request from server and **sends** the internal version of the firmware. This functionality was not implemented prior to 1 April. Used to confirm that the Arduino board is running a particular version of the firmware.
 
-[Data] (char*) the internal versioning of the firmware.
+[Data] (char\*) the internal versioning of the firmware.
 
 ## (R) `get_hue_0`, `get_hue_1`, `get_sat_0`, `get_sat_1`, `get_val_0`, `get_val_1`
 
@@ -224,7 +226,7 @@ _Handled by `parseOSCMessage()`._
 /pod[ID]/get_val_1
 ```
 
-_Handled by `parseOSCMessage()`._
+_Handled by `parseOSCMessage()`. Currently not working._
 
 **Receives** request to return the start (0) and end (1) HSV values.
 
@@ -239,7 +241,7 @@ _Handled by `parseOSCMessage()`._
 /pod[ID]/val_1 [Data]
 ```
 
-_Handled by `parseOSCMessage()`._
+_Handled by `parseOSCMessage()`. Currently not working._
 
 **Sends** the current value for the start (0) and end (1) HSV values.
 
@@ -256,7 +258,7 @@ _Handled by `parseOSCMessage()`._
 /pod[ID]/set_val_1 [Data]
 ```
 
-_Handled by `parseOSCMessage()`._
+_Handled by `parseOSCMessage()`. Currently not working._
 
 **Receives** request to overwrite the start (0) and end (1) HSV values.
 
