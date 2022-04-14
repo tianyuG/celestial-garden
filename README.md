@@ -2,9 +2,9 @@
 
 Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://acceleratefestival.com/exhibits/celestial-garden/) ([archived](https://web.archive.org/web/20220327211602/https://acceleratefestival.com/exhibits/celestial-garden/)). Code in this repository controls the visual effects and transports data used by diagnostics and audio generation over local network.
 
-> _Main firmware, documentation, and diagnostics written in 2022 by Tianyu Ge._
+> _Main firmware, documentation, API, diagnostics and part of the front-end interface written in 2022 by Tianyu Ge._
 
-A project from Institute for Creativity, Arts and Technology (ICAT) at Virginia Tech.
+A project of [Institute for Creativity, Arts and Technology (ICAT)](https://icat.vt.edu/) at Virginia Tech.
 
 - [celestial-garden](#celestial-garden)
   - [Description](#description)
@@ -25,6 +25,8 @@ A project from Institute for Creativity, Arts and Technology (ICAT) at Virginia 
 
 ## Description
 
+> Celestial Garden is an interactive installation where participants engage with inflated teardrop forms in real-time. Each nylon pendant is equipped with both sound and light that respond directly to the participants’ touch—creating a unique audiovisual soundscape.
+
 ### Work roles
 
 Tanner Upthegrove (Institute for Creativity, Arts and Technology; ICAT): Ideation; audio design and processing; docent.
@@ -35,7 +37,7 @@ Thomas Tucker (School of Visual Arts; SOVA): Ideation; hardware and visual desig
 
 David Franusich (ICAT): Ideation; hardware and experience design; docent.
 
-Tianyu Ge (Department of Computer Science): Software implementation and interaction design; docent.
+Tianyu Ge (Department of Computer Science; previously SOVA): Software implementation and interaction design; docent.
 
 Rodney Kimbangu (SOVA): Video documentation; docent.
 
@@ -45,7 +47,7 @@ Charlie Duff: Docent.
 
 Portions of code adapted from earlier works by [David Franusich](./ReferenceCode/IlluminousBuoys_LED-OSC_control-211213/IlluminousBuoys_LED-OSC_control-211213.ino), [Matthew Swarts](ReferenceCode/ACC_2022_CelestialGarden_LEDtest/ACC_2022_CelestialGarden_LEDtest.ino), and [Adrian](ReferenceCode/OSC_UDPReceive/OSC_UDPReceive.ino) [Freed](ReferenceCode/UDPSendMessage-220324.ino).
 
-With thanks to staffs at the Smithsonian National Museum of American History, the ACCelerate 2022 festival staffs and organising committee, ICAT staffs and management, Christina Franusich for photography, students from Studio 72 for helping with taking down the installation as well as the open source community that helped this project.
+With thanks to staffs at the Smithsonian National Museum of American History, the ACCelerate 2022 festival staffs and organising committee, ICAT staffs and management, Christina Franusich for photography, Adam Short for on-premise support, students from Studio 72 for helping with taking down the installation as well as the open source community that helped this project.
 
 ### Reflections
 
