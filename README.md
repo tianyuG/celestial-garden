@@ -2,6 +2,8 @@
 
 Arduino firmware for ACCelerate 2022 exhibit [Celestial Garden](https://acceleratefestival.com/exhibits/celestial-garden/) ([archived](https://web.archive.org/web/20220327211602/https://acceleratefestival.com/exhibits/celestial-garden/)). Code in this repository controls the visual effects and transports data used by diagnostics and audio generation over local network.
 
+![A photo of Celestial Garden right after it was set up. Sixteen pods were attached to a metal frame. The pods have a speaker and lightstrips inside of them and reacts to movements (poke, bump, even from draft when walking past) by changing colour and creating dynamic soundscapes.](./setup.jpeg)
+
 > _Main firmware, documentation, API, diagnostics and part of the front-end interface written in 2022 by Tianyu Ge._
 
 A project of [Institute for Creativity, Arts and Technology (ICAT)](https://icat.vt.edu/) at Virginia Tech.
